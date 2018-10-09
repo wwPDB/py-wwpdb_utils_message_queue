@@ -23,7 +23,7 @@ from wwpdb.utils.detach.DetachedProcessBase import DetachedProcessBase
 from wwpdb.utils.message_queue.MessageConsumerBase import MessageConsumerBase
 #
 from wwpdb.utils.message_queue.MessageQueueConnection import MessageQueueConnection
-from wwpdb.api.config.ConfigInfo import ConfigInfo, getSiteId
+from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
 
 logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s]-%(module)s.%(funcName)s: %(message)s')

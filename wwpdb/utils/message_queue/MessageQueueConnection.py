@@ -35,7 +35,7 @@ try:
 except ImportError:
     from urllib import urlencode
     
-from wwpdb.api.config.ConfigInfo import ConfigInfo, getSiteId
+from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
 
 logger = logging.getLogger()
 
