@@ -37,6 +37,7 @@ from wwpdb.utils.message_queue.MessageQueueConnection import MessageQueueConnect
 logging.basicConfig(level=logging.INFO, format='\n[%(levelname)s]-%(module)s.%(funcName)s: %(message)s')
 logger = logging.getLogger()
 
+from wwpdb.utils.testing.Features import Features
 
 def messageHandler(channel, method, header, body):
     channel.basic_ack(delivery_tag=method.delivery_tag)
@@ -52,6 +53,7 @@ def messageHandler(channel, method, header, body):
     return
 
 
+@unittest.skipUnless(Features().haveRbmqTestServer(), 'require Rbmq Test Environment')
 class MessageConsumerBasicTests(unittest.TestCase):
 
     def setUp(self):
@@ -134,7 +136,7 @@ class MessageConsumerBasicTests(unittest.TestCase):
 
 def suiteConsumeRequest():
     suite = unittest.TestSuite()
-    # suite.addTest(MessageConsumerBasicTests('testConsumeBasic'))
+    #suite.addTest(MessageConsumerBasicTests('testConsumeBasic'))
     suite.addTest(MessageConsumerBasicTests('testConsumeSSL'))
     #
     return suite

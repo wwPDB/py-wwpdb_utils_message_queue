@@ -36,7 +36,9 @@ from wwpdb.utils.message_queue.MessageQueueConnection import MessageQueueConnect
 logging.basicConfig(level=logging.WARN, format='\n[%(levelname)s]-%(module)s.%(funcName)s: %(message)s')
 logger = logging.getLogger()
 
+from wwpdb.utils.testing.Features import Features
 
+@unittest.skipUnless(Features().haveRbmqTestServer(), 'require Rbmq Test Environment')
 class MessageQueueConnectionTests(unittest.TestCase):
 
     def setUp(self):

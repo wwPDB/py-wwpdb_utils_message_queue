@@ -53,7 +53,7 @@ setup(
     #
     # These basic tests require no database services -
     test_suite="wwpdb.utils.tests-message_queue",
-    tests_require=['tox'],
+    tests_require=['tox', 'wwpdb.utils.testing'],
     #
     # Not configured ...
     extras_require={

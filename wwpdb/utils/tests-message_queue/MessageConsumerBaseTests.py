@@ -36,7 +36,9 @@ from wwpdb.utils.message_queue.MessageQueueConnection import MessageQueueConnect
 logging.basicConfig(level=logging.INFO, format='\n[%(levelname)s]-%(module)s.%(funcName)s: %(message)s')
 logger = logging.getLogger()
 
+from wwpdb.utils.testing.Features import Features
 
+@unittest.skipUnless(Features().haveRbmqTestServer(), 'require Rbmq Test Environment')
 class MessageConsumer(MessageConsumerBase):
 
     def __init__(self, amqpUrl):
@@ -47,6 +49,7 @@ class MessageConsumer(MessageConsumerBase):
         return True
 
 
+@unittest.skipUnless(Features().haveRbmqTestServer(), 'require Rbmq Test Environment')
 class MessageConsumerBaseTests(unittest.TestCase):
 
     def setUp(self):
