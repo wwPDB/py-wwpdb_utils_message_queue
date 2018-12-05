@@ -54,7 +54,7 @@ class MessagePublisher(object):
             connection = pika.BlockingConnection(parameters)
             channel = connection.channel()
             channel.exchange_declare(exchange=exchangeName,
-                                     type="topic",
+                                     exchange_type="topic",
                                      durable=True,
                                      auto_delete=False)
 

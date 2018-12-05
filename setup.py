@@ -44,7 +44,7 @@ setup(
         'console_scripts': []
     },
     #
-    install_requires=['wwpdb.utils.config', 'pika', 'wwpdb.utils.detach'],
+    install_requires=['wwpdb.utils.config', 'pika>=0.12.0', 'wwpdb.utils.detach'],
     packages=find_packages(exclude=['wwpdb.utils.tests-message_queue', 'mock-data', 'tests.*']),
     package_data={
         # If any package contains *.md or *.rst ...  files, include them:
