@@ -28,7 +28,7 @@ setup(
     url='https://github.com/rcsb/py-wwpdb_utils_message_queue',
     #
     license='Apache 2.0',
-    classifiers=(
+    classifiers=[
         'Development Status :: 3 - Alpha',
         # 'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
@@ -39,12 +39,12 @@ setup(
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
-    ),
+    ],
     entry_points={
         'console_scripts': []
     },
     #
-    install_requires=['wwpdb.utils.config', 'pika>=0.12.0', 'wwpdb.utils.detach'],
+    install_requires=['wwpdb.utils.config', 'pika~=0.12', 'wwpdb.utils.detach'],
     packages=find_packages(exclude=['wwpdb.utils.tests-message_queue', 'mock-data', 'tests.*']),
     package_data={
         # If any package contains *.md or *.rst ...  files, include them:
