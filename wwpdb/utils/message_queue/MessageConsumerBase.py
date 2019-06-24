@@ -320,12 +320,13 @@ class MessageConsumerBase(object):
         """
         logger.info('Received message # %s from %s: %s', basic_deliver.delivery_tag, properties.app_id, body)
         try:
-            thread = threading.Thread(self.workerMethod(msgBody=body,deliveryTag=basic_deliver.delivery_tag))
+            thread = threading.Thread(target=self.workerMethod, args=(body, basic_deliver.delivery_tag))
             thread.start()
             while thread.is_alive():  
                 # Loop while the thread is processing
-                self._channel._connection.sleep(1.0)
-            print('Back from thread')
+                #self._channel.sleep(1.0)
+                time.sleep(1.0)
+            logger.info('Thread completed')
             #self.workerMethod(msgBody=body, deliveryTag=basic_deliver.delivery_tag)
             #time.sleep(10)
         except Exception as e:
