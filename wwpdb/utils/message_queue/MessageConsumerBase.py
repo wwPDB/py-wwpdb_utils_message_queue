@@ -20,6 +20,7 @@ __license__ = "Creative Commons Attribution 3.0 Unported"
 __version__ = "V0.07"
 
 import logging
+import threading
 import pika
 import time
 try:
@@ -319,10 +320,17 @@ class MessageConsumerBase(object):
         """
         logger.info('Received message # %s from %s: %s', basic_deliver.delivery_tag, properties.app_id, body)
         try:
-            self.workerMethod(msgBody=body, deliveryTag=basic_deliver.delivery_tag)
+            thread = threading.Thread(self.workerMethod(msgBody=body,deliveryTag=basic_deliver.delivery_tag))
+            thread.start()
+            while thread.is_alive():  
+                # Loop while the thread is processing
+                self._channel._connection.sleep(1.0)
+            print('Back from thread')
+            #self.workerMethod(msgBody=body, deliveryTag=basic_deliver.delivery_tag)
             #time.sleep(10)
-        except:
+        except Exception as e:
             logger.exception("Worker failing with exception")
+            logger.exception(e)
         #
         self.acknowledgeMessage(basic_deliver.delivery_tag)
 
