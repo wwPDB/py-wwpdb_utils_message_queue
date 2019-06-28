@@ -324,7 +324,9 @@ class MessageConsumerBase(object):
             thread.start()
             while thread.is_alive():  
                 # Loop while the thread is processing
-                self._channel._connection.sleep(1.0)
+                time.sleep(1.0)
+                self._channel.process_data_events()
+                #self._channel._connection.sleep(1.0)
             print('Back from thread')
             #self.workerMethod(msgBody=body, deliveryTag=basic_deliver.delivery_tag)
             #time.sleep(10)
