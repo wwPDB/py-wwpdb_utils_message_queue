@@ -389,6 +389,7 @@ class MessageConsumerBase(object):
         self._connection = self.connect()
         self._channel = self._connection.channel()
         #
+        self.setupQueue(self.__queueName)
         self._channel.basic_qos(prefetch_count=1)
         self._channel.basic_consume(self.onMessage, self.__queueName)
         #
