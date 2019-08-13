@@ -54,7 +54,7 @@ inmain=True if __name__ == '__main__' else False
 def messageHandler(channel, method, header, body):
     channel.basic_ack(delivery_tag=method.delivery_tag)
 
-    if body == "quit":
+    if body == b"quit":
         channel.basic_cancel(consumer_tag="test_consumer_tag")
         channel.stop_consuming()
         logger.info("Message body %r -- done " % body)

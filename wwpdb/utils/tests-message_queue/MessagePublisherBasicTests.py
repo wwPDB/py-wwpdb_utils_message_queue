@@ -65,7 +65,7 @@ class MessagePublisherBasicTests(unittest.TestCase):
         try:
             mp = MessagePublisher()
             #
-            for ii in xrange(1, self.__numMessages + 1):
+            for ii in range(1, self.__numMessages + 1):
                 message = "Test message %5d" % ii
                 mp.publish(message, exchangeName="test_exchange", queueName="test_queue", routingKey="text_message")
             #

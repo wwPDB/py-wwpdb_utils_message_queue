@@ -33,6 +33,8 @@ else:
 
 from wwpdb.utils.message_queue.MessagePublisher import MessagePublisher
 from wwpdb.utils.message_queue.MessageQueueConnection import MessageQueueConnection
+from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
+
 #
 
 logging.basicConfig(level=logging.INFO, format='\n[%(levelname)s]-%(module)s.%(funcName)s: %(message)s')
@@ -56,7 +58,7 @@ class MessagePublishConsumeBasicTests(unittest.TestCase):
         try:
             mp = MessagePublisher()
             #
-            for ii in xrange(1, self.__numMessages + 1):
+            for ii in range(1, self.__numMessages + 1):
                 message = "Test message %5d" % ii
                 mp.publish(message, exchangeName="test_exchange", queueName="test_queue", routingKey="text_message")
             #
@@ -112,7 +114,7 @@ class MessagePublishConsumeBasicTests(unittest.TestCase):
 def messageHandler(channel, method, header, body):
     channel.basic_ack(delivery_tag=method.delivery_tag)
 
-    if body == "quit":
+    if body == b"quit":
         channel.basic_cancel(consumer_tag="test_consumer_tag")
         channel.stop_consuming()
         logger.info("Message body %r -- done " % body)

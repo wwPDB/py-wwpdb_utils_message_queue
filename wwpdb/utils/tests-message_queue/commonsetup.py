@@ -13,11 +13,12 @@ mockTopPath = os.path.join(TOPDIR, 'wwpdb', 'mock-data')
 
 # Must create config file before importing ConfigInfo
 from wwpdb.utils.testing.SiteConfigSetup  import SiteConfigSetup
-from wwpdb.utils.testing.CreateRWTree import CreateRWTree
 
 mockTopPath = os.path.join(TOPDIR, 'wwpdb', 'mock-data')
 from wwpdb.utils.testing.SiteConfigSetup import SiteConfigSetup
 SiteConfigSetup().setupEnvironment(TESTOUTPUT, mockTopPath)
+
+from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
 
 
 class commonsetup(object):
