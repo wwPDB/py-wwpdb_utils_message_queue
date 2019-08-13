@@ -30,6 +30,15 @@ import pika
 import time
 import logging
 
+if __package__ is None or __package__ == '':
+    import sys
+    from os import path
+
+    sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
+    from commonsetup import TESTOUTPUT
+else:
+    from .commonsetup import TESTOUTPUT
+
 from wwpdb.utils.message_queue.MessageQueueConnection import MessageQueueConnection
 
 #
@@ -38,6 +47,9 @@ logging.basicConfig(level=logging.INFO, format='\n[%(levelname)s]-%(module)s.%(f
 logger = logging.getLogger()
 
 from wwpdb.utils.testing.Features import Features
+
+# This test needs to run from main - it blocks and must be tested by hand
+inmain=True if __name__ == '__main__' else False
 
 def messageHandler(channel, method, header, body):
     channel.basic_ack(delivery_tag=method.delivery_tag)
@@ -53,7 +65,7 @@ def messageHandler(channel, method, header, body):
     return
 
 
-@unittest.skipUnless(Features().haveRbmqTestServer(), 'require Rbmq Test Environment')
+@unittest.skipUnless(Features().haveRbmqTestServer() and inmain, 'require Rbmq Test Environment and run from commandline')
 class MessageConsumerBasicTests(unittest.TestCase):
 
     def setUp(self):
@@ -73,7 +85,7 @@ class MessageConsumerBasicTests(unittest.TestCase):
             channel = connection.channel()
 
             channel.exchange_declare(exchange="test_exchange",
-                                     type="topic",
+                                     exchange_type="topic",
                                      durable=True,
                                      auto_delete=False)
 
@@ -111,7 +123,7 @@ class MessageConsumerBasicTests(unittest.TestCase):
             channel = connection.channel()
 
             channel.exchange_declare(exchange="test_exchange",
-                                     type="topic",
+                                     exchange_type="topic",
                                      durable=True,
                                      auto_delete=False)
 
