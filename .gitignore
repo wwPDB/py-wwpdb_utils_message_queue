@@ -102,3 +102,6 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# Testing directory
+wwpdb/utils/tests-message_queue/test-output
