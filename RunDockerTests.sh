@@ -6,4 +6,4 @@ sleep 10
 export RBMQUP=YES
 tox -epy27
 #tox -epy37
-#docker-compose down
+docker-compose down
