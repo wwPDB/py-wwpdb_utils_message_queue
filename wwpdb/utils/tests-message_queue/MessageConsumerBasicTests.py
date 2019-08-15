@@ -95,7 +95,7 @@ class MessageConsumerBasicTests(unittest.TestCase):
                                queue=result.method.queue,
                                routing_key='text_message')
 
-            channel.basic_consume(messageHandler,
+            channel.basic_consume(callback=messageHandler,
                                   queue=result.method.queue,
                                   consumer_tag="test_consumer_tag")
 
@@ -133,7 +133,7 @@ class MessageConsumerBasicTests(unittest.TestCase):
                                queue=result.method.queue,
                                routing_key='text_message')
 
-            channel.basic_consume(messageHandler,
+            channel.basic_consume(callback=messageHandler,
                                   queue=result.method.queue,
                                   consumer_tag="test_consumer_tag")
 
