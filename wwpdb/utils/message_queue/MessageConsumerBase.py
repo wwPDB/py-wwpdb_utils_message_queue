@@ -84,8 +84,7 @@ class MessageConsumerBase(object):
         logger.info('Connecting to %s', self._url)
         return pika.SelectConnection(pika.URLParameters(self._url),
                                      on_open_callback=self.onConnectionOpen,
-                                     on_open_error_callback=None,
-                                     stop_ioloop_on_close=False)
+                                     on_open_error_callback=None)
 
     def onConnectionOpenError(self, *args, **kw):
         """  Callback on connection error  - not used  -
@@ -283,7 +282,7 @@ class MessageConsumerBase(object):
         logger.info('Issuing consumer related RPC commands')
         self.addOnCancelCallback()
         self._consumerTag = self._channel.basic_consume(queue=self.__queueName,
-                                                        callback=self.onMessage)
+                                                        on_message_callback=self.onMessage)
 
     def addOnCancelCallback(self):
         """Add a callback that will be invoked if RabbitMQ cancels the consumer
