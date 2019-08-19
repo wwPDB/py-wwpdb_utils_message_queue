@@ -30,6 +30,15 @@ import pika
 import time
 import logging
 
+if __package__ is None or __package__ == '':
+    import sys
+    from os import path
+
+    sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
+    from commonsetup import TESTOUTPUT
+else:
+    from .commonsetup import TESTOUTPUT
+
 from wwpdb.utils.message_queue.MessageQueueConnection import MessageQueueConnection
 
 #
@@ -39,10 +48,13 @@ logger = logging.getLogger()
 
 from wwpdb.utils.testing.Features import Features
 
+# This test needs to run from main - it blocks and must be tested by hand
+inmain=True if __name__ == '__main__' else False
+
 def messageHandler(channel, method, header, body):
     channel.basic_ack(delivery_tag=method.delivery_tag)
 
-    if body == "quit":
+    if body == b"quit":
         channel.basic_cancel(consumer_tag="test_consumer_tag")
         channel.stop_consuming()
         logger.info("Message body %r -- done " % body)
@@ -53,7 +65,7 @@ def messageHandler(channel, method, header, body):
     return
 
 
-@unittest.skipUnless(Features().haveRbmqTestServer(), 'require Rbmq Test Environment')
+@unittest.skipUnless(Features().haveRbmqTestServer() and inmain, 'require Rbmq Test Environment and run from commandline')
 class MessageConsumerBasicTests(unittest.TestCase):
 
     def setUp(self):
@@ -73,7 +85,7 @@ class MessageConsumerBasicTests(unittest.TestCase):
             channel = connection.channel()
 
             channel.exchange_declare(exchange="test_exchange",
-                                     type="topic",
+                                     exchange_type="topic",
                                      durable=True,
                                      auto_delete=False)
 
@@ -83,7 +95,7 @@ class MessageConsumerBasicTests(unittest.TestCase):
                                queue=result.method.queue,
                                routing_key='text_message')
 
-            channel.basic_consume(messageHandler,
+            channel.basic_consume(on_message_callback=messageHandler,
                                   queue=result.method.queue,
                                   consumer_tag="test_consumer_tag")
 
@@ -111,7 +123,7 @@ class MessageConsumerBasicTests(unittest.TestCase):
             channel = connection.channel()
 
             channel.exchange_declare(exchange="test_exchange",
-                                     type="topic",
+                                     exchange_type="topic",
                                      durable=True,
                                      auto_delete=False)
 
@@ -121,7 +133,7 @@ class MessageConsumerBasicTests(unittest.TestCase):
                                queue=result.method.queue,
                                routing_key='text_message')
 
-            channel.basic_consume(messageHandler,
+            channel.basic_consume(on_message_callback=messageHandler,
                                   queue=result.method.queue,
                                   consumer_tag="test_consumer_tag")
 

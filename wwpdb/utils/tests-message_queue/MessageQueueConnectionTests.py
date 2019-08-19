@@ -31,6 +31,15 @@ import pika
 import time
 import logging
 #
+if __package__ is None or __package__ == '':
+    import sys
+    from os import path
+
+    sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
+    from commonsetup import TESTOUTPUT
+else:
+    from .commonsetup import TESTOUTPUT
+#
 from wwpdb.utils.message_queue.MessageQueueConnection import MessageQueueConnection
 
 logging.basicConfig(level=logging.WARN, format='\n[%(levelname)s]-%(module)s.%(funcName)s: %(message)s')
@@ -57,7 +66,7 @@ class MessageQueueConnectionTests(unittest.TestCase):
             channel = connection.channel()
 
             channel.exchange_declare(exchange="test_exchange",
-                                     type="topic",
+                                     exchange_type="topic",
                                      passive=False,
                                      durable=True,
                                      auto_delete=False)
@@ -95,7 +104,7 @@ class MessageQueueConnectionTests(unittest.TestCase):
             connection = pika.BlockingConnection(parameters)
             channel = connection.channel()
             channel.exchange_declare(exchange="test_exchange",
-                                     type="topic",
+                                     exchange_type="topic",
                                      passive=False,
                                      durable=True,
                                      auto_delete=False)
@@ -127,7 +136,7 @@ class MessageQueueConnectionTests(unittest.TestCase):
 def suitePublishRequest():
     suite = unittest.TestSuite()
     suite.addTest(MessageQueueConnectionTests('testPublishRequestAuthBasic'))
-    # suite.addTest(MessageQueueConnectionTests('testPublishRequestAuthSSL'))
+    suite.addTest(MessageQueueConnectionTests('testPublishRequestAuthSSL'))
     #
     return suite
 

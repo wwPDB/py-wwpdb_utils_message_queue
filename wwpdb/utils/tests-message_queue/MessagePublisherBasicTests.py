@@ -30,6 +30,15 @@ import unittest
 import time
 import logging
 
+if __package__ is None or __package__ == '':
+    import sys
+    from os import path
+
+    sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
+    from commonsetup import TESTOUTPUT
+else:
+    from .commonsetup import TESTOUTPUT
+
 from wwpdb.utils.message_queue.MessagePublisher import MessagePublisher
 #
 
@@ -38,7 +47,11 @@ logger = logging.getLogger()
 
 from wwpdb.utils.testing.Features import Features
 
-@unittest.skipUnless(Features().haveRbmqTestServer(), 'require Rbmq Test Environment')
+# This test could be run from main - it will load up a queue
+inmain=True if __name__ == '__main__' else False
+
+
+@unittest.skipUnless(Features().haveRbmqTestServer() and inmain, 'require Rbmq Test Environment and started from command line')
 class MessagePublisherBasicTests(unittest.TestCase):
 
     def setUp(self):
@@ -52,7 +65,7 @@ class MessagePublisherBasicTests(unittest.TestCase):
         try:
             mp = MessagePublisher()
             #
-            for ii in xrange(1, self.__numMessages + 1):
+            for ii in range(1, self.__numMessages + 1):
                 message = "Test message %5d" % ii
                 mp.publish(message, exchangeName="test_exchange", queueName="test_queue", routingKey="text_message")
             #
