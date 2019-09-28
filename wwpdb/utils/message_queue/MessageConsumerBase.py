@@ -394,9 +394,9 @@ class MessageConsumerBase(object):
         self._connection = self.connect()
         self._channel = self._connection.channel()
         #
-        self._channel.queue_declare(self.__queueName, durable=True)
+        self._channel.queue_declare(queue=self.__queueName, durable=True)
         self._channel.basic_qos(prefetch_count=1)
-        self._channel.basic_consume(self.onMessage, self.__queueName)
+        self._channel.basic_consume(queue=self.__queueName, on_message_callback=self.onMessage)
         #
         #self.addOnChannelCloseCallback()
         #self.setupExchange(self.__exchange, self.__exchangeType)
