@@ -222,7 +222,7 @@ class MessageConsumerBase(object):
 
         """
         logger.info('Declaring exchange %s', exchangeName)
-        self._channel.exchange_declare(self.onExchangeDeclareOk,
+        self._channel.exchange_declare(callback=self.onExchangeDeclareOk,
                                        exchange=exchangeName,
                                        exchange_type=exchangeType,
                                        passive=False,
@@ -245,7 +245,8 @@ class MessageConsumerBase(object):
 
         """
         logger.info('Declaring queue %s', queueName)
-        self._channel.queue_declare(self.onQueueDeclareOk, queue=queueName, durable=True)
+        self._channel.queue_declare(callback=self.onQueueDeclareOk,
+                                    queue=queueName, durable=True)
 
     def onQueueDeclareOk(self, method_frame):
         """Method invoked on success of Queue.Declare call made when setupQueue has completed.
@@ -257,8 +258,10 @@ class MessageConsumerBase(object):
 
         """
         logger.info('Binding %s to %s with %s', self.__exchange, self.__queueName, self.__routingKey)
-        self._channel.queue_bind(self.onBindOk, self.__queueName,
-                                 self.__exchange, self.__routingKey)
+        self._channel.queue_bind(callback=self.onBindOk,
+                                 queue=self.__queueName,
+                                 exchange=self.__exchange,
+                                 routing_key=self.__routingKey)
 
     def onBindOk(self, unused_frame):
         """Invoked by pika when the Queue.Bind method has completed. At this
@@ -285,7 +288,8 @@ class MessageConsumerBase(object):
         """
         logger.info('Issuing consumer related RPC commands')
         self.addOnCancelCallback()
-        self._consumerTag = self._channel.basic_consume(self.onMessage, self.__queueName)
+        self._consumerTag = self._channel.basic_consume(queue=self.__queueName,
+                                                        on_message_callback=self.onMessage)
 
     def addOnCancelCallback(self):
         """Add a callback that will be invoked if RabbitMQ cancels the consumer
@@ -359,7 +363,8 @@ class MessageConsumerBase(object):
         """
         if self._channel:
             logger.info('Sending a Basic.Cancel command to RabbitMQ')
-            self._channel.basic_cancel(self.onCancelOk, self._consumerTag)
+            self._channel.basic_cancel(callback=self.onCancelOk,
+                                       consumer_tag=self._consumerTag)
 
     def onCancelOk(self, unused_frame):
         """This method is invoked by pika when RabbitMQ acknowledges the

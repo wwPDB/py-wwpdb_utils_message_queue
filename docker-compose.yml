@@ -1,0 +1,13 @@
+version: "3"
+services:
+ rabbitmq:
+    image: "rabbitmq:3-management"
+    ports:
+      - "5672:5672"
+      - "5671:5671"
+      - "15672:15672"
+      - "15671:15671"
+    volumes:
+      - ./wwpdb/mock-data/da_top/rbmq:/rbmq
+      - ./wwpdb/mock-data/da_top/rbmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
+#{versions,[tlsv1.2, tlsv1.1, tlsv1]}
