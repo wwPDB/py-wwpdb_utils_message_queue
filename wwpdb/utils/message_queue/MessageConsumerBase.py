@@ -83,9 +83,15 @@ class MessageConsumerBase(object):
 
         """
         logger.info('Connecting to %s', self._url)
-        return pika.SelectConnection(pika.URLParameters(self._url),
-                                     on_open_callback=self.onConnectionOpen,
-                                     on_open_error_callback=None)
+        #return pika.SelectConnection(pika.URLParameters(self._url),
+        #                             on_open_callback=self.onConnectionOpen,
+        #                             on_open_error_callback=None,
+        #                             stop_ioloop_on_close=False)
+
+        return pika.BlockingConnection(pika.URLParameters(self._url),) 
+        #                               on_open_callback=self.onConnectionOpen,
+        #                               on_open_error_callback=None,
+        #                               stop_ioloop_on_close=False)
 
     def onConnectionOpenError(self, *args, **kw):
         """  Callback on connection error  - not used  -
@@ -327,15 +333,18 @@ class MessageConsumerBase(object):
             thread.start()
             while thread.is_alive():  
                 # Loop while the thread is processing
-                #self._channel.sleep(1.0)
-                time.sleep(1.0)
-            logger.info('Thread completed')
+                #time.sleep(1.0)
+                #self._channel.process_data_events()
+                self._channel._connection.sleep(1.0)
+            print('Back from thread')
             #self.workerMethod(msgBody=body, deliveryTag=basic_deliver.delivery_tag)
             #time.sleep(10)
         except Exception as e:
             logger.exception("Worker failing with exception")
             logger.exception(e)
         #
+        logging.info("Done task")
+        #unused_channel.basic_ack(delivery_tag = basic_deliver.delivery_tag)
         self.acknowledgeMessage(basic_deliver.delivery_tag)
 
     def acknowledgeMessage(self, deliveryTag):
@@ -383,7 +392,17 @@ class MessageConsumerBase(object):
 
         """
         self._connection = self.connect()
-        self._connection.ioloop.start()
+        self._channel = self._connection.channel()
+        #
+        self._channel.queue_declare(queue=self.__queueName, durable=True)
+        self._channel.basic_qos(prefetch_count=1)
+        self._channel.basic_consume(queue=self.__queueName, on_message_callback=self.onMessage)
+        #
+        #self.addOnChannelCloseCallback()
+        #self.setupExchange(self.__exchange, self.__exchangeType)
+        self._channel.start_consuming()
+        #self.onConnectionOpen()
+        #self._connection.ioloop.start()
 
     def stop(self):
         """Cleanly shutdown the connection to RabbitMQ by stopping the consumer
@@ -408,7 +427,7 @@ class MessageConsumerBase(object):
         self._closing = True
         self.stopConsuming()
         logger.info('Cleanly stopped')
-        self._connection.ioloop.start()
+        #self._connection.ioloop.start()
 
     def closeConnection(self):
         """This method closes the connection to RabbitMQ."""
