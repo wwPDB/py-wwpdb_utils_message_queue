@@ -427,7 +427,7 @@ class MessageConsumerBase(object):
         self._closing = True
         self.stopConsuming()
         logger.info('Cleanly stopped')
-        self._connection.ioloop.start()
+        #self._connection.ioloop.start()
 
     def closeConnection(self):
         """This method closes the connection to RabbitMQ."""
