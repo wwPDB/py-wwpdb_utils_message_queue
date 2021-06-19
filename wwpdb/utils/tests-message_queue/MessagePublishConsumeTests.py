@@ -27,20 +27,17 @@ if __package__ is None or __package__ == '':
     from os import path
 
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
-    from commonsetup import TESTOUTPUT
+    from commonsetup import TESTOUTPUT  # pylint: disable=import-error,unused-import
 else:
-    from .commonsetup import TESTOUTPUT
+    from .commonsetup import TESTOUTPUT  # noqa: F401
 
 from wwpdb.utils.message_queue.MessagePublisher import MessagePublisher
 from wwpdb.utils.message_queue.MessageQueueConnection import MessageQueueConnection
-from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
-
+from wwpdb.utils.testing.Features import Features
 #
-
 logging.basicConfig(level=logging.INFO, format='\n[%(levelname)s]-%(module)s.%(funcName)s: %(message)s')
 logger = logging.getLogger()
 
-from wwpdb.utils.testing.Features import Features
 
 @unittest.skipUnless(Features().haveRbmqTestServer(), 'require Rbmq Test Environment')
 class MessagePublishConsumeBasicTests(unittest.TestCase):
@@ -48,7 +45,7 @@ class MessagePublishConsumeBasicTests(unittest.TestCase):
     def testPublishConsume(self):
         self.publishMessages()
         self.consumeMessages()
-        
+
     def publishMessages(self):
         """  Publish numMessages messages to the test queue -
         """
@@ -64,13 +61,12 @@ class MessagePublishConsumeBasicTests(unittest.TestCase):
             #
             #  Send a quit message to shutdown an associated test consumer -
             mp.publish("quit", exchangeName="test_exchange", queueName="test_queue", routingKey="text_message")
-        except:
+        except Exception:
             logger.exception("Publish request failing")
             self.fail()
 
         endTime = time.time()
-        logger.debug("Completed (%f seconds)" % (endTime - startTime))
-
+        logger.debug("Completed (%f seconds)", (endTime - startTime))
 
     def consumeMessages(self):
         """  Test case:  publish single text message basic authentication
@@ -104,31 +100,34 @@ class MessagePublishConsumeBasicTests(unittest.TestCase):
 
             channel.start_consuming()
 
-        except:
+        except Exception:
             logger.exception("Basic consumer failing")
             self.fail()
 
         endTime = time.time()
-        logger.debug("Completed (%f seconds)" % (endTime - startTime))
+        logger.debug("Completed (%f seconds)", (endTime - startTime))
 
-def messageHandler(channel, method, header, body):
+
+def messageHandler(channel, method, header, body):  # pylint: disable=unused-argument
     channel.basic_ack(delivery_tag=method.delivery_tag)
 
     if body == b"quit":
         channel.basic_cancel(consumer_tag="test_consumer_tag")
         channel.stop_consuming()
-        logger.info("Message body %r -- done " % body)
+        logger.info("Message body %r -- done ", body)
     else:
-        logger.info("Message body %r" % body)
+        logger.info("Message body %r", body)
         time.sleep(0.25)
     #
     return
+
 
 def suitePublishConsumeRequest():
     suite = unittest.TestSuite()
     suite.addTest(MessagePublishConsumeBasicTests('testPublishConsume'))
     #
     return suite
+
 
 if __name__ == '__main__':
     runner = unittest.TextTestRunner(failfast=True)

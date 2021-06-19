@@ -35,20 +35,20 @@ if __package__ is None or __package__ == '':
     from os import path
 
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
-    from commonsetup import TESTOUTPUT
+    from commonsetup import TESTOUTPUT  # noqa: disable=import-error
 else:
-    from .commonsetup import TESTOUTPUT
+    from .commonsetup import TESTOUTPUT  # noqa: F401
 
 from wwpdb.utils.message_queue.MessagePublisher import MessagePublisher
+from wwpdb.utils.testing.Features import Features
 #
 
 logging.basicConfig(level=logging.INFO, format='\n[%(levelname)s]-%(module)s.%(funcName)s: %(message)s')
 logger = logging.getLogger()
 
-from wwpdb.utils.testing.Features import Features
 
 # This test could be run from main - it will load up a queue
-inmain=True if __name__ == '__main__' else False
+inmain = True if __name__ == '__main__' else False
 
 
 @unittest.skipUnless(Features().haveRbmqTestServer() and inmain, 'require Rbmq Test Environment and started from command line')
@@ -71,7 +71,7 @@ class MessagePublisherBasicTests(unittest.TestCase):
             #
             #  Send a quit message to shutdown an associated test consumer -
             mp.publish("quit", exchangeName="test_exchange", queueName="test_queue", routingKey="text_message")
-        except:
+        except Exception:
             logger.exception("Publish request failing")
             self.fail()
 
@@ -84,6 +84,7 @@ def suitePublishRequest():
     suite.addTest(MessagePublisherBasicTests('testPublishMessages'))
     #
     return suite
+
 
 if __name__ == '__main__':
     runner = unittest.TextTestRunner(failfast=True)

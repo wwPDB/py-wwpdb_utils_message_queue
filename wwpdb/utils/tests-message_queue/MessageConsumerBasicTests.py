@@ -35,21 +35,21 @@ if __package__ is None or __package__ == '':
     from os import path
 
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
-    from commonsetup import TESTOUTPUT
+    from commonsetup import TESTOUTPUT  # pylint: disable=import-error,unused-import
 else:
-    from .commonsetup import TESTOUTPUT
+    from .commonsetup import TESTOUTPUT  # noqa: F401
 
 from wwpdb.utils.message_queue.MessageQueueConnection import MessageQueueConnection
-
+from wwpdb.utils.testing.Features import Features
 #
 
 logging.basicConfig(level=logging.INFO, format='\n[%(levelname)s]-%(module)s.%(funcName)s: %(message)s')
 logger = logging.getLogger()
 
-from wwpdb.utils.testing.Features import Features
 
 # This test needs to run from main - it blocks and must be tested by hand
-inmain=True if __name__ == '__main__' else False
+inmain = True if __name__ == '__main__' else False
+
 
 def messageHandler(channel, method, header, body):
     channel.basic_ack(delivery_tag=method.delivery_tag)
@@ -57,9 +57,9 @@ def messageHandler(channel, method, header, body):
     if body == b"quit":
         channel.basic_cancel(consumer_tag="test_consumer_tag")
         channel.stop_consuming()
-        logger.info("Message body %r -- done " % body)
+        logger.info("Message body %r -- done ", body)
     else:
-        logger.info("Message body %r" % body)
+        logger.info("Message body %r", body)
         time.sleep(1)
     #
     return
@@ -101,11 +101,11 @@ class MessageConsumerBasicTests(unittest.TestCase):
 
             channel.start_consuming()
 
-        except:
+        except Exception:
             logger.exception("Basic consumer failing")
 
         endTime = time.time()
-        logger.debug("Completed (%f seconds)" % (endTime - startTime))
+        logger.debug("Completed (%f seconds)", (endTime - startTime))
 
     def testConsumeSSL(self):
         """  Test case:  publish single text message basic authentication
@@ -139,19 +139,20 @@ class MessageConsumerBasicTests(unittest.TestCase):
 
             channel.start_consuming()
 
-        except:
+        except Exception:
             logger.exception("Basic consumer failing")
 
         endTime = time.time()
-        logger.debug("Completed (%f seconds)" % (endTime - startTime))
+        logger.debug("Completed (%f seconds)", (endTime - startTime))
 
 
 def suiteConsumeRequest():
     suite = unittest.TestSuite()
-    #suite.addTest(MessageConsumerBasicTests('testConsumeBasic'))
+    # suite.addTest(MessageConsumerBasicTests('testConsumeBasic'))
     suite.addTest(MessageConsumerBasicTests('testConsumeSSL'))
     #
     return suite
+
 
 if __name__ == '__main__':
     runner = unittest.TextTestRunner(failfast=True)

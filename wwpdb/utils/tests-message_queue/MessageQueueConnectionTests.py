@@ -38,14 +38,14 @@ if __package__ is None or __package__ == '':
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
     from commonsetup import TESTOUTPUT
 else:
-    from .commonsetup import TESTOUTPUT
+    from .commonsetup import TESTOUTPUT  # noqa: F401
 #
 from wwpdb.utils.message_queue.MessageQueueConnection import MessageQueueConnection
+from wwpdb.utils.testing.Features import Features
 
 logging.basicConfig(level=logging.WARN, format='\n[%(levelname)s]-%(module)s.%(funcName)s: %(message)s')
 logger = logging.getLogger()
 
-from wwpdb.utils.testing.Features import Features
 
 @unittest.skipUnless(Features().haveRbmqTestServer(), 'require Rbmq Test Environment')
 class MessageQueueConnectionTests(unittest.TestCase):
@@ -86,7 +86,7 @@ class MessageQueueConnectionTests(unittest.TestCase):
                                   ))
             #
             connection.close()
-        except:
+        except Exception:
             logger.exception("Publish request failing")
             self.fail()
 
@@ -125,7 +125,7 @@ class MessageQueueConnectionTests(unittest.TestCase):
                                   ))
             #
             connection.close()
-        except:
+        except Exception:
             logger.exception("Publish request failing")
             self.fail()
 
@@ -139,6 +139,7 @@ def suitePublishRequest():
     suite.addTest(MessageQueueConnectionTests('testPublishRequestAuthSSL'))
     #
     return suite
+
 
 if __name__ == '__main__':
     runner = unittest.TextTestRunner(failfast=True)
