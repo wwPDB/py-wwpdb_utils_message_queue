@@ -36,7 +36,7 @@ if __package__ is None or __package__ == '':
     from os import path
 
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
-    from commonsetup import TESTOUTPUT
+    from commonsetup import TESTOUTPUT  # pylint: disable=unused-import,import-error
 else:
     from .commonsetup import TESTOUTPUT  # noqa: F401
 #
@@ -61,7 +61,7 @@ class MessageQueueConnectionTests(unittest.TestCase):
         try:
             #
             mqc = MessageQueueConnection()
-            parameters = mqc._getConnectionParameters()
+            parameters = mqc._getConnectionParameters()  # pylint: disable=protected-access
             connection = pika.BlockingConnection(parameters)
             channel = connection.channel()
 
@@ -91,7 +91,7 @@ class MessageQueueConnectionTests(unittest.TestCase):
             self.fail()
 
         endTime = time.time()
-        logger.debug("Completed (%f seconds)" % (endTime - startTime))
+        logger.debug("Completed (%f seconds)", (endTime - startTime))
 
     def testPublishRequestAuthSSL(self):
         """  Test case:  create SSL connection and publish a test message
@@ -100,7 +100,7 @@ class MessageQueueConnectionTests(unittest.TestCase):
         logger.debug("Starting")
         try:
             mqc = MessageQueueConnection()
-            parameters = mqc._getSslConnectionParameters()
+            parameters = mqc._getSslConnectionParameters()  # pylint: disable=protected-access
             connection = pika.BlockingConnection(parameters)
             channel = connection.channel()
             channel.exchange_declare(exchange="test_exchange",
@@ -130,7 +130,7 @@ class MessageQueueConnectionTests(unittest.TestCase):
             self.fail()
 
         endTime = time.time()
-        logger.debug("Completed (%f seconds)" % (endTime - startTime))
+        logger.debug("Completed (%f seconds)", (endTime - startTime))
 
 
 def suitePublishRequest():

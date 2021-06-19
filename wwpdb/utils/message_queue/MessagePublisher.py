@@ -50,7 +50,7 @@ class MessagePublisher(object):
         ok = False
         try:
             mqc = MessageQueueConnection()
-            parameters = mqc._getDefaultConnectionParameters()
+            parameters = mqc._getDefaultConnectionParameters()  # pylint: disable=protected-access
             connection = pika.BlockingConnection(parameters)
             channel = connection.channel()
             channel.exchange_declare(exchange=exchangeName,

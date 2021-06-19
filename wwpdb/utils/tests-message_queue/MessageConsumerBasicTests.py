@@ -51,7 +51,7 @@ logger = logging.getLogger()
 inmain = True if __name__ == '__main__' else False
 
 
-def messageHandler(channel, method, header, body):
+def messageHandler(channel, method, header, body):  # pylint: disable=unused-argument
     channel.basic_ack(delivery_tag=method.delivery_tag)
 
     if body == b"quit":
@@ -79,7 +79,7 @@ class MessageConsumerBasicTests(unittest.TestCase):
         try:
             self.__messageCount = 0
             mqc = MessageQueueConnection()
-            parameters = mqc._getConnectionParameters()
+            parameters = mqc._getConnectionParameters()  # pylint: disable=protected-access
 
             connection = pika.BlockingConnection(parameters)
             channel = connection.channel()
@@ -115,7 +115,7 @@ class MessageConsumerBasicTests(unittest.TestCase):
         try:
             self.__messageCount = 0
             mqc = MessageQueueConnection()
-            url = mqc._getSslConnectionUrl()
+            url = mqc._getSslConnectionUrl()  # pylint: disable=protected-access
             parameters = pika.URLParameters(url)
 
             connection = pika.BlockingConnection(parameters)

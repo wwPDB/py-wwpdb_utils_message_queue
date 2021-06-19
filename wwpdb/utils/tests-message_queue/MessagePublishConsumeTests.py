@@ -49,13 +49,13 @@ class MessagePublishConsumeBasicTests(unittest.TestCase):
     def publishMessages(self):
         """  Publish numMessages messages to the test queue -
         """
-        self.__numMessages = 50
+        numMessages = 50
         startTime = time.time()
         logger.debug("Starting")
         try:
             mp = MessagePublisher()
             #
-            for ii in range(1, self.__numMessages + 1):
+            for ii in range(1, numMessages + 1):
                 message = "Test message %5d" % ii
                 mp.publish(message, exchangeName="test_exchange", queueName="test_queue", routingKey="text_message")
             #
@@ -71,14 +71,11 @@ class MessagePublishConsumeBasicTests(unittest.TestCase):
     def consumeMessages(self):
         """  Test case:  publish single text message basic authentication
         """
-        self.__messageCount = 0
-
         startTime = time.time()
         logger.debug("Starting")
         try:
-            self.__messageCount = 0
             mqc = MessageQueueConnection()
-            parameters = mqc._getConnectionParameters()
+            parameters = mqc._getConnectionParameters()  # pylint: disable=protected-access
 
             connection = pika.BlockingConnection(parameters)
             channel = connection.channel()

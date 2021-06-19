@@ -35,7 +35,7 @@ if __package__ is None or __package__ == '':
     from os import path
 
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
-    from commonsetup import TESTOUTPUT  # noqa: disable=import-error
+    from commonsetup import TESTOUTPUT  # pylint: disable=import-error,unused-import
 else:
     from .commonsetup import TESTOUTPUT  # noqa: F401
 
@@ -76,7 +76,7 @@ class MessagePublisherBasicTests(unittest.TestCase):
             self.fail()
 
         endTime = time.time()
-        logger.debug("Completed (%f seconds)" % (endTime - startTime))
+        logger.debug("Completed (%f seconds)", (endTime - startTime))
 
 
 def suitePublishRequest():

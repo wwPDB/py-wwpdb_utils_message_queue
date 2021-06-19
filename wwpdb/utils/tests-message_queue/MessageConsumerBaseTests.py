@@ -49,7 +49,7 @@ logger = logging.getLogger()
 
 # This test needs to run from main - otherwise will block
 inmain = True if __name__ == '__main__' else False
-print("XXXXXXXX", Features().haveRbmqTestServer())
+
 
 @unittest.skipUnless(Features().haveRbmqTestServer(), 'require Rbmq Test Environment')
 class MessageConsumer(MessageConsumerBase):
@@ -74,7 +74,7 @@ class MessageConsumerBaseTests(unittest.TestCase):
         try:
             self.__messageCount = 0
             mqc = MessageQueueConnection()
-            url = mqc._getSslConnectionUrl()
+            url = mqc._getSslConnectionUrl()  # pylint: disable=protected-access
             mc = MessageConsumer(amqpUrl=url)
             mc.setQueue(queueName="test_queue", routingKey="text_message")
             mc.setExchange(exchange="test_exchange", exchangeType="topic")

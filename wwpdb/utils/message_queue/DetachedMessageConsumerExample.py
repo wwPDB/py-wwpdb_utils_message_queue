@@ -47,7 +47,7 @@ class MessageConsumerWorker(object):
 
     def __setup(self):
         mqc = MessageQueueConnection()
-        url = mqc._getSslConnectionUrl()
+        url = mqc._getSslConnectionUrl()  # pylint: disable=protected-access
         self.__mc = MessageConsumer(amqpUrl=url)
         self.__mc.setQueue(queueName="test_queue", routingKey="text_message")
         self.__mc.setExchange(exchange="test_exchange", exchangeType="topic")
@@ -129,14 +129,14 @@ def main():
     parser.add_option("--debug", default=1, type="int", dest="debugLevel", help="Debug level (default=1) [0-3]")
     parser.add_option("--instance", default=1, type="int", dest="instanceNo", help="Instance number [1-n]")
     #
-    (options, args) = parser.parse_args()
+    (options, _args) = parser.parse_args()
     #
     pidFilePath = os.path.join(wsLogDirPath, myHostName + '_' + str(options.instanceNo) + '.pid')
     stdoutFilePath = os.path.join(wsLogDirPath, myHostName + '_' + str(options.instanceNo) + '_stdout.log')
     stderrFilePath = os.path.join(wsLogDirPath, myHostName + '_' + str(options.instanceNo) + '_stderr.log')
     wfLogFilePath = os.path.join(wsLogDirPath, myHostName + '_' + str(options.instanceNo) + '_' + now + '.log')
     #
-    logger = logging.getLogger(name='root')
+    logger = logging.getLogger(name='root')  # pylint: disable=redefined-outer-name
     logging.captureWarnings(True)
     formatter = logging.Formatter('%(asctime)s [%(levelname)s]-%(module)s.%(funcName)s: %(message)s')
     handler = logging.FileHandler(wfLogFilePath)
