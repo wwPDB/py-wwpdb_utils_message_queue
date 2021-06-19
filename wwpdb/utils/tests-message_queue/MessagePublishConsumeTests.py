@@ -22,7 +22,7 @@ import time
 import logging
 import pika
 
-if __package__ is None or __package__ == '':
+if __package__ is None or __package__ == "":
     import sys
     from os import path
 
@@ -34,21 +34,20 @@ else:
 from wwpdb.utils.message_queue.MessagePublisher import MessagePublisher
 from wwpdb.utils.message_queue.MessageQueueConnection import MessageQueueConnection
 from wwpdb.utils.testing.Features import Features
+
 #
-logging.basicConfig(level=logging.INFO, format='\n[%(levelname)s]-%(module)s.%(funcName)s: %(message)s')
+logging.basicConfig(level=logging.INFO, format="\n[%(levelname)s]-%(module)s.%(funcName)s: %(message)s")
 logger = logging.getLogger()
 
 
-@unittest.skipUnless(Features().haveRbmqTestServer(), 'require Rbmq Test Environment')
+@unittest.skipUnless(Features().haveRbmqTestServer(), "require Rbmq Test Environment")
 class MessagePublishConsumeBasicTests(unittest.TestCase):
-
     def testPublishConsume(self):
         self.publishMessages()
         self.consumeMessages()
 
     def publishMessages(self):
-        """  Publish numMessages messages to the test queue -
-        """
+        """Publish numMessages messages to the test queue -"""
         numMessages = 50
         startTime = time.time()
         logger.debug("Starting")
@@ -69,8 +68,7 @@ class MessagePublishConsumeBasicTests(unittest.TestCase):
         logger.debug("Completed (%f seconds)", (endTime - startTime))
 
     def consumeMessages(self):
-        """  Test case:  publish single text message basic authentication
-        """
+        """Test case:  publish single text message basic authentication"""
         startTime = time.time()
         logger.debug("Starting")
         try:
@@ -80,20 +78,12 @@ class MessagePublishConsumeBasicTests(unittest.TestCase):
             connection = pika.BlockingConnection(parameters)
             channel = connection.channel()
 
-            channel.exchange_declare(exchange="test_exchange",
-                                     exchange_type="topic",
-                                     durable=True,
-                                     auto_delete=False)
+            channel.exchange_declare(exchange="test_exchange", exchange_type="topic", durable=True, auto_delete=False)
 
-            result = channel.queue_declare(queue='test_queue',
-                                           durable=True)
-            channel.queue_bind(exchange='test_exchange',
-                               queue=result.method.queue,
-                               routing_key='text_message')
+            result = channel.queue_declare(queue="test_queue", durable=True)
+            channel.queue_bind(exchange="test_exchange", queue=result.method.queue, routing_key="text_message")
 
-            channel.basic_consume(on_message_callback=messageHandler,
-                                  queue=result.method.queue,
-                                  consumer_tag="test_consumer_tag")
+            channel.basic_consume(on_message_callback=messageHandler, queue=result.method.queue, consumer_tag="test_consumer_tag")
 
             channel.start_consuming()
 
@@ -121,11 +111,11 @@ def messageHandler(channel, method, header, body):  # pylint: disable=unused-arg
 
 def suitePublishConsumeRequest():
     suite = unittest.TestSuite()
-    suite.addTest(MessagePublishConsumeBasicTests('testPublishConsume'))
+    suite.addTest(MessagePublishConsumeBasicTests("testPublishConsume"))
     #
     return suite
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     runner = unittest.TextTestRunner(failfast=True)
     runner.run(suitePublishConsumeRequest())

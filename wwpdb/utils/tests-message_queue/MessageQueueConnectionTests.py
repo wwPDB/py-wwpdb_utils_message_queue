@@ -30,8 +30,9 @@ import unittest
 import pika
 import time
 import logging
+
 #
-if __package__ is None or __package__ == '':
+if __package__ is None or __package__ == "":
     import sys
     from os import path
 
@@ -43,19 +44,17 @@ else:
 from wwpdb.utils.message_queue.MessageQueueConnection import MessageQueueConnection
 from wwpdb.utils.testing.Features import Features
 
-logging.basicConfig(level=logging.WARN, format='\n[%(levelname)s]-%(module)s.%(funcName)s: %(message)s')
+logging.basicConfig(level=logging.WARN, format="\n[%(levelname)s]-%(module)s.%(funcName)s: %(message)s")
 logger = logging.getLogger()
 
 
-@unittest.skipUnless(Features().haveRbmqTestServer(), 'require Rbmq Test Environment')
+@unittest.skipUnless(Features().haveRbmqTestServer(), "require Rbmq Test Environment")
 class MessageQueueConnectionTests(unittest.TestCase):
-
     def setUp(self):
         pass
 
     def testPublishRequestAuthBasic(self):
-        """  Test case:  create connection with basic authenication and publish single text message.
-        """
+        """Test case:  create connection with basic authenication and publish single text message."""
         startTime = time.time()
         logger.debug("Starting")
         try:
@@ -65,25 +64,20 @@ class MessageQueueConnectionTests(unittest.TestCase):
             connection = pika.BlockingConnection(parameters)
             channel = connection.channel()
 
-            channel.exchange_declare(exchange="test_exchange",
-                                     exchange_type="topic",
-                                     passive=False,
-                                     durable=True,
-                                     auto_delete=False)
+            channel.exchange_declare(exchange="test_exchange", exchange_type="topic", passive=False, durable=True, auto_delete=False)
 
-            result = channel.queue_declare(queue='test_queue',
-                                           durable=True)
-            channel.queue_bind(exchange='test_exchange',
-                               queue=result.method.queue,
-                               routing_key='text_message')
+            result = channel.queue_declare(queue="test_queue", durable=True)
+            channel.queue_bind(exchange="test_exchange", queue=result.method.queue, routing_key="text_message")
             message = "Test message"
             #
-            channel.basic_publish(exchange='test_exchange',
-                                  routing_key='text_message',
-                                  body=message,
-                                  properties=pika.BasicProperties(
-                                      delivery_mode=2,  # make message persistent
-                                  ))
+            channel.basic_publish(
+                exchange="test_exchange",
+                routing_key="text_message",
+                body=message,
+                properties=pika.BasicProperties(
+                    delivery_mode=2,  # make message persistent
+                ),
+            )
             #
             connection.close()
         except Exception:
@@ -94,8 +88,7 @@ class MessageQueueConnectionTests(unittest.TestCase):
         logger.debug("Completed (%f seconds)", (endTime - startTime))
 
     def testPublishRequestAuthSSL(self):
-        """  Test case:  create SSL connection and publish a test message
-        """
+        """Test case:  create SSL connection and publish a test message"""
         startTime = time.time()
         logger.debug("Starting")
         try:
@@ -103,26 +96,21 @@ class MessageQueueConnectionTests(unittest.TestCase):
             parameters = mqc._getSslConnectionParameters()  # pylint: disable=protected-access
             connection = pika.BlockingConnection(parameters)
             channel = connection.channel()
-            channel.exchange_declare(exchange="test_exchange",
-                                     exchange_type="topic",
-                                     passive=False,
-                                     durable=True,
-                                     auto_delete=False)
+            channel.exchange_declare(exchange="test_exchange", exchange_type="topic", passive=False, durable=True, auto_delete=False)
 
-            result = channel.queue_declare(queue='test_queue',
-                                           durable=True)
-            channel.queue_bind(exchange='test_exchange',
-                               queue=result.method.queue,
-                               routing_key='text_message')
+            result = channel.queue_declare(queue="test_queue", durable=True)
+            channel.queue_bind(exchange="test_exchange", queue=result.method.queue, routing_key="text_message")
             message = "Test message"
 
             #
-            channel.basic_publish(exchange='',
-                                  routing_key='test_queue',
-                                  body=message,
-                                  properties=pika.BasicProperties(
-                                      delivery_mode=2,  # make message persistent
-                                  ))
+            channel.basic_publish(
+                exchange="",
+                routing_key="test_queue",
+                body=message,
+                properties=pika.BasicProperties(
+                    delivery_mode=2,  # make message persistent
+                ),
+            )
             #
             connection.close()
         except Exception:
@@ -135,12 +123,12 @@ class MessageQueueConnectionTests(unittest.TestCase):
 
 def suitePublishRequest():
     suite = unittest.TestSuite()
-    suite.addTest(MessageQueueConnectionTests('testPublishRequestAuthBasic'))
-    suite.addTest(MessageQueueConnectionTests('testPublishRequestAuthSSL'))
+    suite.addTest(MessageQueueConnectionTests("testPublishRequestAuthBasic"))
+    suite.addTest(MessageQueueConnectionTests("testPublishRequestAuthSSL"))
     #
     return suite
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     runner = unittest.TextTestRunner(failfast=True)
     runner.run(suitePublishRequest())

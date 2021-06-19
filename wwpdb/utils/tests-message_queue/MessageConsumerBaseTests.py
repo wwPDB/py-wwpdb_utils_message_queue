@@ -29,7 +29,7 @@ import unittest
 import time
 import logging
 
-if __package__ is None or __package__ == '':
+if __package__ is None or __package__ == "":
     import sys
     from os import path
 
@@ -41,34 +41,33 @@ else:
 from wwpdb.utils.message_queue.MessageConsumerBase import MessageConsumerBase
 from wwpdb.utils.message_queue.MessageQueueConnection import MessageQueueConnection
 from wwpdb.utils.testing.Features import Features
+
 #
 
-logging.basicConfig(level=logging.INFO, format='\n[%(levelname)s]-%(module)s.%(funcName)s: %(message)s')
+logging.basicConfig(level=logging.INFO, format="\n[%(levelname)s]-%(module)s.%(funcName)s: %(message)s")
 logger = logging.getLogger()
 
 
 # This test needs to run from main - otherwise will block
-inmain = True if __name__ == '__main__' else False
+inmain = True if __name__ == "__main__" else False
 
 
-@unittest.skipUnless(Features().haveRbmqTestServer(), 'require Rbmq Test Environment')
+@unittest.skipUnless(Features().haveRbmqTestServer(), "require Rbmq Test Environment")
 class MessageConsumer(MessageConsumerBase):
     def workerMethod(self, msgBody, deliveryTag=None):
         logger.info("Message body %r", msgBody)
         return True
 
 
-@unittest.skipUnless(Features().haveRbmqTestServer(), 'require Rbmq Test Environment')
-@unittest.skipUnless(inmain, 'require running from main()')
+@unittest.skipUnless(Features().haveRbmqTestServer(), "require Rbmq Test Environment")
+@unittest.skipUnless(inmain, "require running from main()")
 class MessageConsumerBaseTests(unittest.TestCase):
-
     def setUp(self):
         self.__messageCount = 0
         #
 
     def testMessageConsumer(self):
-        """  Test case:  run async consumer
-        """
+        """Test case:  run async consumer"""
         startTime = time.time()
         logger.info("Starting")
         try:
@@ -92,11 +91,11 @@ class MessageConsumerBaseTests(unittest.TestCase):
 
 def suiteMessageConsumer():
     suite = unittest.TestSuite()
-    suite.addTest(MessageConsumerBaseTests('testMessageConsumer'))
+    suite.addTest(MessageConsumerBaseTests("testMessageConsumer"))
     #
     return suite
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     runner = unittest.TextTestRunner(failfast=True)
     runner.run(suiteMessageConsumer())

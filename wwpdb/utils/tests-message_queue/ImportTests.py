@@ -17,7 +17,7 @@ __version__ = "V0.01"
 
 import unittest
 
-if __package__ is None or __package__ == '':
+if __package__ is None or __package__ == "":
     import sys
     from os import path
 
