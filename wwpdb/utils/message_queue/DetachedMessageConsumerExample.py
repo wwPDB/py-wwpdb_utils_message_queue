@@ -17,7 +17,7 @@ import os
 import platform
 import time
 import logging
-from optparse import OptionParser
+from optparse import OptionParser  # pylint: disable=deprecated-module
 
 from wwpdb.utils.detach.DetachedProcessBase import DetachedProcessBase
 from wwpdb.utils.message_queue.MessageConsumerBase import MessageConsumerBase
@@ -32,11 +32,11 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s]-%(mo
 class MessageConsumer(MessageConsumerBase):
     """  This class would be replaced to perform application specific services...
     """
-    def __init__(self, amqpUrl):
-        super(MessageConsumer, self).__init__(amqpUrl)
+    # def __init__(self, amqpUrl):
+    #     super(MessageConsumer, self).__init__(amqpUrl)
 
-    def workerMethod(self, msgBody):
-        logger.info("Message body %r" % msgBody)
+    def workerMethod(self, msgBody, deliveryTag=None):
+        logger.info("Message body %r", msgBody)
         return True
 
 
@@ -64,11 +64,11 @@ class MessageConsumerWorker(object):
                 self.__mc.run()
             except KeyboardInterrupt:
                 self.__mc.stop()
-        except:
+        except Exception:
             logger.exception("MessageConsumer failing")
 
         endTime = time.time()
-        logger.info("Completed (%f seconds)" % (endTime - startTime))
+        logger.info("Completed (%f seconds)", (endTime - startTime))
 
     def suspend(self):
         logger.info("Suspending consumer worker... ")
@@ -95,7 +95,7 @@ class MyDetachedProcess(DetachedProcessBase):
         logger.info("SUSPENDING detached process")
         try:
             self.__mcw.suspend()
-        except:
+        except Exception as _e:  # noqa: F841
             pass
 
 
@@ -157,21 +157,22 @@ def main():
 
     if options.startOp:
         sys.stdout.write("+DetachedMessageConsumer() starting consumer service at %s\n" % lt)
-        logger.info("DetachedMessageConsumer() starting consumer service at %s" % lt)
+        logger.info("DetachedMessageConsumer() starting consumer service at %s", lt)
         myDP.start()
     elif options.stopOp:
         sys.stdout.write("+DetachedMessageConsumer() stopping consumer service at %s\n" % lt)
-        logger.info("DetachedMessageConsumer() stopping consumer service at %s" % lt)
+        logger.info("DetachedMessageConsumer() stopping consumer service at %s", lt)
         myDP.stop()
     elif options.restartOp:
         sys.stdout.write("+DetachedMessageConsumer() restarting consumer service at %s\n" % lt)
-        logger.info("DetachedMessageConsumer() restarting consumer service at %s" % lt)
+        logger.info("DetachedMessageConsumer() restarting consumer service at %s", lt)
         myDP.restart()
     elif options.statusOp:
         sys.stdout.write("+DetachedMessageConsumer() reporting status for consumer service at %s\n" % lt)
         sys.stdout.write(myDP.status())
     else:
         pass
+
 
 if __name__ == "__main__":
     main()

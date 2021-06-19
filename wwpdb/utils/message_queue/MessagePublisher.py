@@ -75,9 +75,9 @@ class MessagePublisher(object):
             #
             ok = True
             connection.close()
-        except:
+        except Exception:
             logger.exception("Publish request failing")
 
         endTime = time.time()
-        logger.debug("Completed publish request in (%f seconds) status %r" % (endTime - startTime, ok))
+        logger.debug("Completed publish request in (%f seconds) status %r", endTime - startTime, ok)
         return ok

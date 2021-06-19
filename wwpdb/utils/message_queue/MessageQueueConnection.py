@@ -34,7 +34,7 @@ try:
     from urllib.parse import urlencode
 except ImportError:
     from urllib import urlencode
-    
+
 from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
 
 logger = logging.getLogger()
@@ -65,11 +65,11 @@ class MessageQueueConnection(object):
             return self._getConnectionParameters()
 
     def _getSslConnectionParameters(self):
-        pObj, url = self.__getSslConnectionParameters()
+        pObj, _url = self.__getSslConnectionParameters()
         return pObj
 
     def _getSslConnectionUrl(self):
-        pObj, url = self.__getSslConnectionParameters()
+        _pObj, url = self.__getSslConnectionParameters()
         return url
 
     def __getSslConnectionParameters(self):
@@ -92,9 +92,9 @@ class MessageQueueConnection(object):
                                                   }
                                   })
             rbmqUrl = "amqps://%s:%s@%s:%d/%s?%s" % (rbmqUser, rbmqPassword, rbmqServerHost, int(rbmqServerPort), rbmqVirtualHost, ssl_opts)
-            logger.debug("rbmq URL: %s " % rbmqUrl)
+            logger.debug("rbmq URL: %s ", rbmqUrl)
             parameters = pika.URLParameters(rbmqUrl)
-        except:
+        except Exception as _e:  # noqa: F841
             logger.exception("Failing")
 
         return parameters, rbmqUrl
@@ -103,13 +103,13 @@ class MessageQueueConnection(object):
     def _getConnectionParameters(self):
         """  Return connection parameters for the standard TCP client connection --
         """
-        pObj, url = self.__getConnectionParameters()
+        pObj, _url = self.__getConnectionParameters()
         return pObj
 
     def _getConnectionUrl(self):
         """  Return connection parameters as a URL for the standard TCP client connection
         """
-        pObj, url = self.__getConnectionParameters()
+        _pObj, url = self.__getConnectionParameters()
         return url
 
     def __getConnectionParameters(self):
@@ -127,8 +127,8 @@ class MessageQueueConnection(object):
             parameters = pika.ConnectionParameters(host=rbmqServerHost, port=int(rbmqServerPort),
                                                    virtual_host=rbmqVirtualHost, credentials=credentials)
             rbmqUrl = "amqp://%s:%s@%s:%d/%s" % (rbmqUser, rbmqPassword, rbmqServerHost, int(rbmqServerPort), rbmqVirtualHost)
-            logger.debug("rbmq URL: %s " % rbmqUrl)
-        except:
+            logger.debug("rbmq URL: %s ", rbmqUrl)
+        except Exception:
             logger.exception("Failing")
 
         return parameters, rbmqUrl
