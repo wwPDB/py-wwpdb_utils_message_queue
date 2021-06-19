@@ -5,5 +5,5 @@ docker-compose up -d
 sleep 10
 export RBMQUP=YES
 # Cannot run in parallel - single queue
-tox 
+tox -epy39,py27
 docker-compose down
