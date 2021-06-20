@@ -61,7 +61,10 @@ class MessageQueueConnectionTests(unittest.TestCase):
             #
             mqc = MessageQueueConnection()
             parameters = mqc._getConnectionParameters()  # pylint: disable=protected-access
+            self.assertIsNotNone(parameters)
             connection = pika.BlockingConnection(parameters)
+            self.assertIsNotNone(connection)
+
             channel = connection.channel()
 
             channel.exchange_declare(exchange="test_exchange", exchange_type="topic", passive=False, durable=True, auto_delete=False)
@@ -94,7 +97,9 @@ class MessageQueueConnectionTests(unittest.TestCase):
         try:
             mqc = MessageQueueConnection()
             parameters = mqc._getSslConnectionParameters()  # pylint: disable=protected-access
+            self.assertIsNotNone(parameters)
             connection = pika.BlockingConnection(parameters)
+            self.assertIsNotNone(connection)
             channel = connection.channel()
             channel.exchange_declare(exchange="test_exchange", exchange_type="topic", passive=False, durable=True, auto_delete=False)
 

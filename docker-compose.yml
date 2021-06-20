@@ -2,8 +2,14 @@ version: "3"
 services:
  rabbitmq:
     image: "rabbitmq:3"
+    environment:
+      - RABBITMQ_SSL_CACERTFILE=/home/rbmq/cacert.pem
+      - RABBITMQ_SSL_CERTFILE=/home/rbmq/server/cert.pem
+      - RABBITMQ_SSL_KEYFILE=/home/rbmq/server/key.pem
+      - RABBITMQ_DEFAULT_VHOST=my_vhost
     ports:
+      - "5673:5673"
       - "5672:5672"
       - "5671:5671"
-      - "15672:15672"
-      - "15671:15671"
+    volumes:
+      - ./wwpdb/mock-data/da_top/rbmq:/home/rbmq
