@@ -25,6 +25,8 @@ jobs:
   variables:
     group: py-shared-variables
     PIP_CACHE_DIR: $(Pipeline.Workspace)/.pip
+    ${{ if and(contains(parameters.fixtures, 'rabbitmq'), startsWith(parameters.os, 'linux')) }}:
+      RBMQENV: "export RBMQUP=yes"
 
   steps:
     #
@@ -118,6 +120,11 @@ jobs:
         displayName: "Start Mongo service"
       #
     #
+    - ${{ if and(contains(parameters.fixtures, 'rabbitmq'), startsWith(parameters.os, 'linux')) }}:
+      # Deploy RabbitMQ
+      - script: "docker run -d -p 5672:5672 -p 5673:5673 rabbitmq:3"
+        displayName: Start rabbitmq
+    #
     - script: "python -c \"import sys; print(sys.version); print(sys.executable)\""
       displayName: show python information
     #
@@ -138,26 +145,31 @@ jobs:
     #
     - ${{ if startsWith(parameters.tox, 'py') }}:
       - script: |
+          ${{variables.RBMQENV}}
           export CONFIG_SUPPORT_TOKEN_ENV=$(VAR_CONFIG_SUPPORT_TOKEN_ENV)
           ${{ format('python -m tox -e {0}', parameters.tox) }}
         displayName: 'Running tox task'
     - ${{ if and(not(startsWith(parameters.tox, 'py')), startsWith(parameters.python, '3.9')) }}:
       - script: |
+          ${{variables.RBMQENV}}
           export CONFIG_SUPPORT_TOKEN_ENV=$(VAR_CONFIG_SUPPORT_TOKEN_ENV)
           ${{ format('python -m tox -e {0}-py39', parameters.tox) }}
         displayName: 'Running tox task'
     - ${{ if and(not(startsWith(parameters.tox, 'py')), startsWith(parameters.python, '3.8')) }}:
       - script: |
+          ${{variables.RBMQENV}}          
           export CONFIG_SUPPORT_TOKEN_ENV=$(VAR_CONFIG_SUPPORT_TOKEN_ENV)
           ${{ format('python -m tox -e {0}-py38', parameters.tox) }}
         displayName: 'Running tox task'
     - ${{ if and(not(startsWith(parameters.tox, 'py')), startsWith(parameters.python, '3.7')) }}:
       - script: |
+          ${{variables.RBMQENV}}
           export CONFIG_SUPPORT_TOKEN_ENV=$(VAR_CONFIG_SUPPORT_TOKEN_ENV)
           ${{ format('python -m tox -e {0}-py37', parameters.tox) }}
         displayName: 'Running tox task'
     - ${{ if and(not(startsWith(parameters.tox, 'py')), startsWith(parameters.python, '2.7')) }}:
       - script: |
+          ${{variables.RBMQENV}}          
           export CONFIG_SUPPORT_TOKEN_ENV=$(VAR_CONFIG_SUPPORT_TOKEN_ENV)
           ${{ format('python -m tox -e {0}-py27', parameters.tox) }}
         displayName: 'Runing tox task'
