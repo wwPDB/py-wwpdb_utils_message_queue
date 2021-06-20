@@ -122,7 +122,9 @@ jobs:
     #
     - ${{ if and(contains(parameters.fixtures, 'rabbitmq'), startsWith(parameters.os, 'linux')) }}:
       # Deploy RabbitMQ
-      - script: "docker run -d -p 5672:5672 -p 5673:5673 rabbitmq:3"
+      - script: |
+          "(cd wwpdb/mock-data/da_top/rbmq; ./cleanup.sh ; ./generate_server_certs.sh ; ./generate_client_keys.sh)"
+          "docker compose up"
         displayName: Start rabbitmq
     #
     - script: "python -c \"import sys; print(sys.version); print(sys.executable)\""
