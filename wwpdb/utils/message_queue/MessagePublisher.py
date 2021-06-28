@@ -29,13 +29,14 @@ __version__ = "V0.07"
 import pika
 import time
 import logging
+
 #
 from wwpdb.utils.message_queue.MessageQueueConnection import MessageQueueConnection
+
 logger = logging.getLogger()
 
 
 class MessagePublisher(object):
-
     def __init__(self):
         pass
 
@@ -43,41 +44,35 @@ class MessagePublisher(object):
         return self.__publishMessage(message=message, exchangeName=exchangeName, queueName=queueName, routingKey=routingKey)
 
     def __publishMessage(self, message, exchangeName, queueName, routingKey, durableFlag=True, deliveryMode=2):
-        """  publish the input message -
-        """
+        """publish the input message -"""
         startTime = time.time()
         logger.debug("Starting to publish message ")
         ok = False
         try:
             mqc = MessageQueueConnection()
-            parameters = mqc._getDefaultConnectionParameters()
+            parameters = mqc._getDefaultConnectionParameters()  # pylint: disable=protected-access
             connection = pika.BlockingConnection(parameters)
             channel = connection.channel()
-            channel.exchange_declare(exchange=exchangeName,
-                                     exchange_type="topic",
-                                     durable=True,
-                                     auto_delete=False)
+            channel.exchange_declare(exchange=exchangeName, exchange_type="topic", durable=True, auto_delete=False)
 
-            result = channel.queue_declare(queue=queueName,
-                                           durable=durableFlag)
-            channel.queue_bind(exchange=exchangeName,
-                               queue=result.method.queue,
-                               routing_key=routingKey
-                               )
+            result = channel.queue_declare(queue=queueName, durable=durableFlag)
+            channel.queue_bind(exchange=exchangeName, queue=result.method.queue, routing_key=routingKey)
 
             #
-            channel.basic_publish(exchange=exchangeName,
-                                  routing_key=routingKey,
-                                  body=message,
-                                  properties=pika.BasicProperties(
-                                      delivery_mode=deliveryMode,  # set message persistence
-                                  ))
+            channel.basic_publish(
+                exchange=exchangeName,
+                routing_key=routingKey,
+                body=message,
+                properties=pika.BasicProperties(
+                    delivery_mode=deliveryMode,  # set message persistence
+                ),
+            )
             #
             ok = True
             connection.close()
-        except:
+        except Exception:
             logger.exception("Publish request failing")
 
         endTime = time.time()
-        logger.debug("Completed publish request in (%f seconds) status %r" % (endTime - startTime, ok))
+        logger.debug("Completed publish request in (%f seconds) status %r", endTime - startTime, ok)
         return ok

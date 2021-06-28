@@ -30,36 +30,35 @@ import unittest
 import time
 import logging
 
-if __package__ is None or __package__ == '':
+if __package__ is None or __package__ == "":
     import sys
     from os import path
 
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
-    from commonsetup import TESTOUTPUT
+    from commonsetup import TESTOUTPUT  # pylint: disable=import-error,unused-import
 else:
-    from .commonsetup import TESTOUTPUT
+    from .commonsetup import TESTOUTPUT  # noqa: F401
 
 from wwpdb.utils.message_queue.MessagePublisher import MessagePublisher
-#
-
-logging.basicConfig(level=logging.INFO, format='\n[%(levelname)s]-%(module)s.%(funcName)s: %(message)s')
-logger = logging.getLogger()
-
 from wwpdb.utils.testing.Features import Features
 
+#
+
+logging.basicConfig(level=logging.INFO, format="\n[%(levelname)s]-%(module)s.%(funcName)s: %(message)s")
+logger = logging.getLogger()
+
+
 # This test could be run from main - it will load up a queue
-inmain=True if __name__ == '__main__' else False
+inmain = True if __name__ == "__main__" else False
 
 
-@unittest.skipUnless(Features().haveRbmqTestServer() and inmain, 'require Rbmq Test Environment and started from command line')
+@unittest.skipUnless(Features().haveRbmqTestServer() and inmain, "require Rbmq Test Environment and started from command line")
 class MessagePublisherBasicTests(unittest.TestCase):
-
     def setUp(self):
         self.__numMessages = 50
 
     def testPublishMessages(self):
-        """  Publish numMessages messages to the test queue -
-        """
+        """Publish numMessages messages to the test queue -"""
         startTime = time.time()
         logger.debug("Starting")
         try:
@@ -71,20 +70,21 @@ class MessagePublisherBasicTests(unittest.TestCase):
             #
             #  Send a quit message to shutdown an associated test consumer -
             mp.publish("quit", exchangeName="test_exchange", queueName="test_queue", routingKey="text_message")
-        except:
+        except Exception:
             logger.exception("Publish request failing")
             self.fail()
 
         endTime = time.time()
-        logger.debug("Completed (%f seconds)" % (endTime - startTime))
+        logger.debug("Completed (%f seconds)", (endTime - startTime))
 
 
 def suitePublishRequest():
     suite = unittest.TestSuite()
-    suite.addTest(MessagePublisherBasicTests('testPublishMessages'))
+    suite.addTest(MessagePublisherBasicTests("testPublishMessages"))
     #
     return suite
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     runner = unittest.TextTestRunner(failfast=True)
     runner.run(suitePublishRequest())

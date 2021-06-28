@@ -109,3 +109,6 @@ venv.bak/
 
 # Testing directory
 wwpdb/utils/tests-message_queue/test-output
+
+# emacs
+*~

@@ -1,0 +1,3 @@
+wwpdb.utils.config
+pika ~= 1.1
+wwpdb.utils.detach
