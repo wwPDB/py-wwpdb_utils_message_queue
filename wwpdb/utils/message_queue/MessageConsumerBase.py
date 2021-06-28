@@ -328,7 +328,7 @@ class MessageConsumerBase(object):
                 # time.sleep(1.0)
                 # self._channel.process_data_events()
                 self._channel._connection.sleep(1.0)  # pylint: disable=protected-access
-            print("Back from thread")
+            # print("Back from thread")
             # self.workerMethod(msgBody=body, deliveryTag=basic_deliver.delivery_tag)
             # time.sleep(10)
         except Exception as e:
