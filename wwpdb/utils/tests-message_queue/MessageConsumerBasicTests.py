@@ -68,15 +68,11 @@ def messageHandler(channel, method, header, body):  # pylint: disable=unused-arg
 
 @unittest.skipUnless(Features().haveRbmqTestServer() and inmain, "require Rbmq Test Environment and run from commandline")
 class MessageConsumerBasicTests(unittest.TestCase):
-    def setUp(self):
-        self.__messageCount = 0
-
     def testConsumeBasic(self):
         """Test case:  publish single text message basic authentication"""
         startTime = time.time()
         logger.debug("Starting")
         try:
-            self.__messageCount = 0
             mqc = MessageQueueConnection()
             parameters = mqc._getConnectionParameters()  # pylint: disable=protected-access
 
@@ -103,7 +99,6 @@ class MessageConsumerBasicTests(unittest.TestCase):
         startTime = time.time()
         logger.debug("Starting")
         try:
-            self.__messageCount = 0
             mqc = MessageQueueConnection()
             url = mqc._getSslConnectionUrl()  # pylint: disable=protected-access
             parameters = pika.URLParameters(url)

@@ -22,7 +22,7 @@ __version__ = "V0.07"
 import logging
 import threading
 import pika
-import time
+# import time
 
 try:
     import exceptions
@@ -58,8 +58,8 @@ class MessageConsumerBase(object):
         self.__queueName = None
         self.__routingKey = None
         #
-        self.__maxReconnectAttemps = 10
-        self.__reconnectInterval = 5
+        # self.__maxReconnectAttemps = 10
+        # self.__reconnectInterval = 5
         #
 
     def setQueue(self, queueName, routingKey):
@@ -101,83 +101,88 @@ class MessageConsumerBase(object):
         logger.info("Catching connection error - ")
         raise pika.exceptions.AMQPConnectionError
 
-    def onConnectionOpen(self, unusedConnection):  # pylint: disable=unused-argument
-        """Callback method on successful connection to RabbitMQ server.
+    # Blocking connection does not have callbacks
+    # def onConnectionOpen(self, unusedConnection):  # pylint: disable=unused-argument
+    #     """Callback method on successful connection to RabbitMQ server.
 
-        :type unused_connection: pika.SelectConnection
+    #     :type unused_connection: pika.SelectConnection
 
-        """
-        logger.info("Connection opened")
-        self.addOnConnectionCloseCallback()
-        self.openChannel()
+    #     """
+    #     logger.info("Connection opened")
+    #     self.addOnConnectionCloseCallback()
+    #     self.openChannel()
 
-    def addOnConnectionCloseCallback(self):
-        """This method adds an on close callback that will be invoked by pika
-        when RabbitMQ closes the connection to the publisher unexpectedly.
+    # Blocking connection does not have callbacks
+    # def addOnConnectionCloseCallback(self):
+    #     """This method adds an on close callback that will be invoked by pika
+    #     when RabbitMQ closes the connection to the publisher unexpectedly.
 
-        """
-        logger.info("Adding connection close callback")
-        self._connection.add_on_close_callback(self.onConnectionClosed)
+    #     """
+    #     logger.info("Adding connection close callback")
+    #     self._connection.add_on_close_callback(self.onConnectionClosed)
 
-    def onConnectionClosed(self, connection, reply_code, reply_text):  # pylint: disable=unused-argument
-        """This method is invoked by pika when the connection to RabbitMQ is
-        closed unexpectedly. Since it is unexpected, we will reconnect to
-        RabbitMQ if it disconnects.
+    # Blocking connctions do not support this method
+    # def onConnectionClosed(self, connection, reply_code, reply_text):  # pylint: disable=unused-argument
+    #     """This method is invoked by pika when the connection to RabbitMQ is
+    #     closed unexpectedly. Since it is unexpected, we will reconnect to
+    #     RabbitMQ if it disconnects.
 
-        :param pika.connection.Connection connection: The closed connection obj
-        :param int reply_code: The server provided reply_code if given
-        :param str reply_text: The server provided reply_text if given
+    #     :param pika.connection.Connection connection: The closed connection obj
+    #     :param int reply_code: The server provided reply_code if given
+    #     :param str reply_text: The server provided reply_text if given
 
-        """
-        self._channel = None
-        if self._closing:
-            self._connection.ioloop.stop()
-        else:
-            logger.warning("Connection closed, reopening in 5 seconds: (%s) %s", reply_code, reply_text)
-            self._connection.add_timeout(5, self.reconnect)
+    #     """
+    #     self._channel = None
+    #     if self._closing:
+    #         self._connection.ioloop.stop()
+    #     else:
+    #         logger.warning("Connection closed, reopening in 5 seconds: (%s) %s", reply_code, reply_text)
+    #         self._connection.add_timeout(5, self.reconnect)
 
-    def reconnect(self):
-        """Callback invoked by the IOLoop timer if the connection is closed.
+    # Callbacks only on asyncio
+    # def reconnect(self):
+    #     """Callback invoked by the IOLoop timer if the connection is closed.
 
-        See the onConnectionClosed method.
+    #     See the onConnectionClosed method.
 
-        Extended reconnection attempts are performed to handle RabbitMQ server restarts.
+    #     Extended reconnection attempts are performed to handle RabbitMQ server restarts.
 
-        """
-        # This is the old connection IOLoop instance, stop its ioloop
-        self._connection.ioloop.stop()
+    #     """
+    #     # This is the old connection IOLoop instance, stop its ioloop
+    #     self._connection.ioloop.stop()
 
-        if not self._closing:
+    #     if not self._closing:
 
-            # Create a new connection
-            self.__maxReconnectAttemps = 10
-            self.__reconnectInterval = 5
-            iTry = 1
-            while True:
-                try:
-                    if iTry > self.__maxReconnectAttemps:
-                        logger.info("Quitting after %d reconnect attempts", iTry)
-                        break
-                    else:
-                        logger.info("Reconnect attempt %d", iTry)
-                    self._connection = self.connect()
-                    break
-                except pika.exceptions.AMQPConnectionError:
-                    iTry += 1
-                    time.sleep(self.__reconnectInterval * iTry)
+    #         # Create a new connection
+    #         self.__maxReconnectAttemps = 10
+    #         self.__reconnectInterval = 5
+    #         iTry = 1
+    #         while True:
+    #             try:
+    #                 if iTry > self.__maxReconnectAttemps:
+    #                     logger.info("Quitting after %d reconnect attempts", iTry)
+    #                     break
+    #                 else:
+    #                     logger.info("Reconnect attempt %d", iTry)
+    #                 self._connection = self.connect()
+    #                 break
+    #             except pika.exceptions.AMQPConnectionError:
+    #                 iTry += 1
+    #                 time.sleep(self.__reconnectInterval * iTry)
 
-            # There is now a new connection, needs a new ioloop to run
-            self._connection.ioloop.start()
+    #         # There is now a new connection, needs a new ioloop to run
+    #         self._connection.ioloop.start()
 
-    def openChannel(self):
-        """Open a new channel with RabbitMQ by issuing the Channel.Open RPC
-        command.
+    # Callbacks only implemented for async connections and we use Blocking.
+    # def openChannel(self):
+    #     """Open a new channel with RabbitMQ by issuing the Channel.Open RPC
+    #     command.
 
-        On success the onChannelOpen callback will be invoked.
+    #     On success the onChannelOpen callback will be invoked.
 
-        """
-        logger.info("Creating a new channel")
-        self._connection.channel(on_open_callback=self.onChannelOpen)
+    #     """
+    #     logger.info("Creating a new channel")
+    #     self._connection.channel(on_open_callback=self.onChannelOpen)
 
     def onChannelOpen(self, channel):
         """This method is invoked by pika when the channel has been opened.

@@ -62,16 +62,11 @@ class MessageConsumer(MessageConsumerBase):
 @unittest.skipUnless(Features().haveRbmqTestServer(), "require Rbmq Test Environment")
 @unittest.skipUnless(inmain, "require running from main()")
 class MessageConsumerBaseTests(unittest.TestCase):
-    def setUp(self):
-        self.__messageCount = 0
-        #
-
     def testMessageConsumer(self):
         """Test case:  run async consumer"""
         startTime = time.time()
         logger.info("Starting")
         try:
-            self.__messageCount = 0
             mqc = MessageQueueConnection()
             url = mqc._getSslConnectionUrl()  # pylint: disable=protected-access
             mc = MessageConsumer(amqpUrl=url)
