@@ -128,6 +128,7 @@ jobs:
           ls -l `pwd`/wwpdb/mock-data/da_top/rbmq
           ls -l `pwd`/wwpdb/mock-data/da_top/rbmq/server
           docker run -p 5672:5672 -p 5671:5671  --mount type=bind,source=`pwd`/wwpdb/mock-data/da_top/rbmq,target=/home/rbmq --mount type=bind,source=`pwd`/wwpdb/mock-data/da_top/rbmq/etc/rabbitmq.conf,target=/etc/rabbitmq/rabbitmq.conf rabbitmq:3
+          docker run -p 5672:5672 -p 5671:5671  --mount type=bind,source=`pwd`/wwpdb/mock-data/da_top/rbmq,target=/home/rbmq --mount type=bind,source=`pwd`/wwpdb/mock-data/da_top/rbmq/etc/rabbitmq.conf,target=/etc/rabbitmq/rabbitmq.conf ubuntu:latest /bin/ls /home/rbmq/server
           sleep 5
           docker ps
           git log  `pwd`/wwpdb/mock-data | head -1
