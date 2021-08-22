@@ -7,11 +7,15 @@ import re
 
 from setuptools import find_packages
 from setuptools import setup
+import sys
+
+if sys.version_info[0] < 3:
+    from io import open as open
 
 packages = []
 thisPackage = "wwpdb.utils.message_queue"
 
-with open("wwpdb/utils/message_queue/__init__.py", "r") as fd:
+with open("wwpdb/utils/message_queue/__init__.py", "r", encoding="utf-8") as fd:
     version = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]', fd.read(), re.MULTILINE).group(1)
 
 if not version:
