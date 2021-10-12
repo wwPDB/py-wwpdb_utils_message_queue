@@ -22,6 +22,7 @@ __version__ = "V0.07"
 import logging
 import threading
 import pika
+import time
 
 # import time
 
@@ -331,10 +332,10 @@ class MessageConsumerBase(object):
             thread.start()
             while thread.is_alive():
                 # Loop while the thread is processing
-                # time.sleep(1.0)
-                # self._channel.process_data_events()
-                self._channel._connection.sleep(1.0)  # pylint: disable=protected-access
-            # print("Back from thread")
+                time.sleep(1.0)
+                self._channel.process_data_events()
+                # self._channel._connection.sleep(1.0)  # pylint: disable=protected-access
+            logging.info("Back from thread")
             # self.workerMethod(msgBody=body, deliveryTag=basic_deliver.delivery_tag)
             # time.sleep(10)
         except Exception as e:
