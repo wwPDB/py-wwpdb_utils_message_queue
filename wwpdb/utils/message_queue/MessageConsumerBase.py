@@ -22,6 +22,7 @@ __version__ = "V0.07"
 import logging
 import threading
 import pika
+import functools
 # import time
 
 try:
@@ -184,6 +185,17 @@ class MessageConsumerBase(object):
     #     logger.info("Creating a new channel")
     #     self._connection.channel(on_open_callback=self.onChannelOpen)
 
+    def ack_message(self, channel, delivery_tag):
+        """Note that `channel` must be the same pika channel instance via which
+        the message being ACKed was retrieved (AMQP protocol constraint).
+        """
+        if channel.is_open:
+            channel.basic_ack(delivery_tag)
+        else:
+            # Channel is already closed, so we can't ACK this message;
+            # log and/or do something that makes sense for your app in this case.
+            pass
+
     def onChannelOpen(self, channel):
         """This method is invoked by pika when the channel has been opened.
         The channel object is passed in so we can make use of it.
@@ -309,40 +321,18 @@ class MessageConsumerBase(object):
         if self._channel:
             self._channel.close()
 
-    def onMessage(self, unused_channel, basic_deliver, properties, body):
-        """Invoked when a message is delivered from RabbitMQ.
+    def do_work(self, delivery_tag, body):
+        # thread_id = threading.get_ident()
+        self.workerMethod(body, delivery_tag)
+        cb = functools.partial(self.ack_message, self._channel, delivery_tag)
+        self._connection.add_callback_threadsafe(cb)
 
-        The channel is passed.  The basic_deliver object that
-        is passed in carries the exchange, routing key, delivery tag and
-        a redelivered flag for the message. The properties passed in is an
-        instance of BasicProperties with the message properties and the body
-        is the message that was sent.
-
-        :param pika.channel.Channel unused_channel: The channel object
-        :param pika.Spec.Basic.Deliver: basic_deliver method
-        :param pika.Spec.BasicProperties: properties
-        :param str|unicode body: The message body
-
-        """
-        logger.info("Received message # %s from %s: %s", basic_deliver.delivery_tag, properties.app_id, body)
-        try:
-            thread = threading.Thread(target=self.workerMethod, args=(body, basic_deliver.delivery_tag))
-            thread.start()
-            while thread.is_alive():
-                # Loop while the thread is processing
-                # time.sleep(1.0)
-                # self._channel.process_data_events()
-                self._channel._connection.sleep(1.0)  # pylint: disable=protected-access
-            # print("Back from thread")
-            # self.workerMethod(msgBody=body, deliveryTag=basic_deliver.delivery_tag)
-            # time.sleep(10)
-        except Exception as e:
-            logger.exception("Worker failing with exception")
-            logger.exception(e)
-        #
-        logging.info("Done task")
-        # unused_channel.basic_ack(delivery_tag = basic_deliver.delivery_tag)
-        self.acknowledgeMessage(basic_deliver.delivery_tag)
+    def on_message(self, method_frame, header_frame, body, args):
+        (threads) = args
+        delivery_tag = method_frame.delivery_tag
+        t = threading.Thread(target=self.do_work, args=(delivery_tag, body))
+        t.start()
+        threads.append(t)
 
     def acknowledgeMessage(self, deliveryTag):
         """Acknowledge the message delivery from RabbitMQ by sending a Basic.Ack method with the delivery tag.
@@ -351,7 +341,11 @@ class MessageConsumerBase(object):
 
         """
         logger.info("Acknowledging message %s", deliveryTag)
-        self._channel.basic_ack(deliveryTag)
+        if self._channel.is_open:
+            self._channel.basic_ack(deliveryTag)
+        else:
+            # TODO what to do here?
+            pass
 
     def stopConsuming(self):
         """Tell RabbitMQ that you would like to stop consuming by sending the
@@ -387,16 +381,25 @@ class MessageConsumerBase(object):
         starting the IOLoop to block and allow the SelectConnection to operate.
 
         """
+        threads = []
         self._connection = self.connect()
         self._channel = self._connection.channel()
         #
         self._channel.queue_declare(queue=self.__queueName, durable=True)
         self._channel.basic_qos(prefetch_count=1)
-        self._channel.basic_consume(queue=self.__queueName, on_message_callback=self.onMessage)
+        on_message_callback = functools.partial(self.on_message, args=(threads))
+        self._channel.basic_consume(queue=self.__queueName, on_message_callback=on_message_callback)
         #
-        # self.addOnChannelCloseCallback()
-        # self.setupExchange(self.__exchange, self.__exchangeType)
-        self._channel.start_consuming()
+        try:
+            self._channel.start_consuming()
+        except KeyboardInterrupt:
+            self._channel.stop_consuming()
+
+        # Wait for all to complete
+        for thread in threads:
+            thread.join()
+
+        self._connection.close()
         # self.onConnectionOpen()
         # self._connection.ioloop.start()
 
