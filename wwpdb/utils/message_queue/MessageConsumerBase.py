@@ -23,7 +23,7 @@ import logging
 import threading
 import pika
 
-# import time
+import time
 
 try:
     import exceptions
@@ -331,8 +331,8 @@ class MessageConsumerBase(object):
             thread.start()
             while thread.is_alive():
                 # Loop while the thread is processing
-                # time.sleep(1.0)
-                # self._channel.process_data_events()
+                time.sleep(1.0)
+                self._connection.process_data_events()
                 self._channel._connection.sleep(1.0)  # pylint: disable=protected-access
             # print("Back from thread")
             # self.workerMethod(msgBody=body, deliveryTag=basic_deliver.delivery_tag)
@@ -352,7 +352,10 @@ class MessageConsumerBase(object):
 
         """
         logger.info("Acknowledging message %s", deliveryTag)
+        if not self._channel.is_open:
+            self._connection = self.connect()
         self._channel.basic_ack(deliveryTag)
+
 
     def stopConsuming(self):
         """Tell RabbitMQ that you would like to stop consuming by sending the
