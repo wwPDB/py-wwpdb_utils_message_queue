@@ -299,7 +299,7 @@ class MessageConsumerBase(object):
         """
         logger.info("Issuing consumer related RPC commands")
         self.addOnCancelCallback()
-        self._consumerTag = self._channel.basic_consume(queue=self.__queueName, on_message_callback=self.onMessage)
+        self._consumerTag = self._channel.basic_consume(queue=self.__queueName, on_message_callback=self.on_message)
 
     def addOnCancelCallback(self):
         """Add a callback that will be invoked if RabbitMQ cancels the consumer
@@ -324,10 +324,10 @@ class MessageConsumerBase(object):
     def do_work(self, delivery_tag, body, connection):
         # thread_id = threading.get_ident()
         self.workerMethod(body, delivery_tag)
-        cb = functools.partial(self.ack_message, self._channel, delivery_tag)
+        cb = functools.partialmethod(ack_message, channel=self._channel, delivery_tag=delivery_tag)
         connection.add_callback_threadsafe(cb)
 
-    def on_message(self, method_frame, header_frame, body, args):
+    def on_message(self, channel, method_frame, header_frame, body, args):
         (connection, threads) = args
         delivery_tag = method_frame.delivery_tag
         t = threading.Thread(target=self.do_work, args=(delivery_tag, body, connection))
@@ -387,7 +387,7 @@ class MessageConsumerBase(object):
         #
         self._channel.queue_declare(queue=self.__queueName, durable=True)
         self._channel.basic_qos(prefetch_count=1)
-        on_message_callback = functools.partial(self.on_message, args=(self._connection, threads))
+        on_message_callback = functools.partialmethod(on_message, args=(self._connection, threads))
         self._channel.basic_consume(queue=self.__queueName, on_message_callback=on_message_callback)
         #
         try:
