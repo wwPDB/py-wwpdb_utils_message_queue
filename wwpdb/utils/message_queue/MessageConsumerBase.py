@@ -321,16 +321,16 @@ class MessageConsumerBase(object):
         if self._channel:
             self._channel.close()
 
-    def do_work(self, delivery_tag, body, connection):
+    def do_work(self, connection, channel, delivery_tag, body):
         # thread_id = threading.get_ident()
         self.workerMethod(body, delivery_tag)
-        cb = functools.partialmethod(self.ack_message, channel=self._channel, delivery_tag=delivery_tag)
+        cb = functools.partialmethod(self.ack_message, channel=channel, delivery_tag=delivery_tag)
         connection.add_callback_threadsafe(cb)
 
-    def on_message(self, channel, method_frame, header_frame, body, args):
-        (connection, threads) = args
+    def on_message(self, method_frame, header_frame, body, args):
+        (channel, connection, threads) = args
         delivery_tag = method_frame.delivery_tag
-        t = threading.Thread(target=self.do_work, args=(delivery_tag, body, connection))
+        t = threading.Thread(target=self.do_work, args=(connection, channel, delivery_tag, body))
         t.start()
         threads.append(t)
 
@@ -387,7 +387,7 @@ class MessageConsumerBase(object):
         #
         self._channel.queue_declare(queue=self.__queueName, durable=True)
         self._channel.basic_qos(prefetch_count=1)
-        on_message_callback = functools.partialmethod(self.on_message, args=(self._connection, threads))
+        on_message_callback = functools.partialmethod(self.on_message, args=(self._channel, self._connection, threads))
         self._channel.basic_consume(queue=self.__queueName, on_message_callback=on_message_callback)
         #
         try:
