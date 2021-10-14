@@ -321,16 +321,16 @@ class MessageConsumerBase(object):
         if self._channel:
             self._channel.close()
 
-    def do_work(self, delivery_tag, body):
+    def do_work(self, delivery_tag, body, connection):
         # thread_id = threading.get_ident()
         self.workerMethod(body, delivery_tag)
         cb = functools.partial(self.ack_message, self._channel, delivery_tag)
-        self._connection.add_callback_threadsafe(cb)
+        connection.add_callback_threadsafe(cb)
 
     def on_message(self, method_frame, header_frame, body, args):
-        (threads) = args
+        (connection, threads) = args
         delivery_tag = method_frame.delivery_tag
-        t = threading.Thread(target=self.do_work, args=(delivery_tag, body))
+        t = threading.Thread(target=self.do_work, args=(delivery_tag, body, connection))
         t.start()
         threads.append(t)
 
@@ -387,7 +387,7 @@ class MessageConsumerBase(object):
         #
         self._channel.queue_declare(queue=self.__queueName, durable=True)
         self._channel.basic_qos(prefetch_count=1)
-        on_message_callback = functools.partial(self.on_message, args=(threads))
+        on_message_callback = functools.partial(self.on_message, args=(self._connection, threads))
         self._channel.basic_consume(queue=self.__queueName, on_message_callback=on_message_callback)
         #
         try:
