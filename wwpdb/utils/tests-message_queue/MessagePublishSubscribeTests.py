@@ -44,13 +44,43 @@ logger = logging.getLogger()
 # @unittest.skipUnless(Features().haveRbmqTestServer(), "require Rbmq Test Environment")
 class MessagePublishConsumeBasicTests(unittest.TestCase):
     def testPublishConsume(self):
+        self.initialize()
         self.publishMessages()
         self.consumeMessages()
+
+    def initialize(self):
+        """Test case:  publish single text message basic authentication"""
+        global LOCAL
+        startTime = time.time()
+        logger.debug("Starting")
+        try:
+            if LOCAL:
+                connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+            else:
+                mqc = MessageQueueConnection()
+                parameters = mqc._getConnectionParameters()  # pylint: disable=protected-access
+                connection = pika.BlockingConnection(parameters)
+
+            self.channel = connection.channel()
+
+            self.channel.exchange_declare(exchange="exchange_test", exchange_type="topic")#, durable=True, auto_delete=False)
+
+            result = self.channel.queue_declare(queue='', exclusive=True, arguments={'x-max-priority':10})#durable=True
+            self.queue_name = result.method.queue
+
+            self.channel.queue_bind(exchange="exchange_test", queue=self.queue_name, routing_key="text_message")
+
+        except Exception:
+            logger.exception("Basic consumer failing")
+            self.fail()
+
+        endTime = time.time()
+        logger.debug("Completed (%f seconds)", (endTime - startTime))
 
     def publishMessages(self):
         """Publish numMessages messages to the test queue -"""
         global LOCAL
-        numMessages = 50
+        numMessages = 10
         startTime = time.time()
         logger.debug("Starting")
         try:
@@ -58,10 +88,10 @@ class MessagePublishConsumeBasicTests(unittest.TestCase):
             #
             for ii in range(1, numMessages + 1):
                 message = "Test message %5d" % ii
-                mp.publish(message, exchangeName="test_exchange", queueName="test_queue", routingKey="text_message", priority=0)
+                mp.publishDirect(message, exchangeName="exchange_test", queueName="queue_test", routingKey="text_message", priority=ii)
             #
             #  Send a quit message to shutdown an associated test consumer -
-            mp.publish("quit", exchangeName="test_exchange", queueName="test_queue", routingKey="text_message", priority=0)
+            mp.publishDirect("quit", exchangeName="exchange_test", queueName="queue_test", routingKey="text_message", priority=0)
         except Exception:
             logger.exception("Publish request failing")
             self.fail()
@@ -75,23 +105,10 @@ class MessagePublishConsumeBasicTests(unittest.TestCase):
         startTime = time.time()
         logger.debug("Starting")
         try:
-            if LOCAL:
-                connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
-            else:
-                mqc = MessageQueueConnection()
-                parameters = mqc._getConnectionParameters()  # pylint: disable=protected-access
-                connection = pika.BlockingConnection(parameters)
 
-            channel = connection.channel()
+            self.channel.basic_consume(on_message_callback=messageHandler, queue=self.queue_name, consumer_tag="test_consumer_tag")
 
-            channel.exchange_declare(exchange="test_exchange", exchange_type="topic", durable=True, auto_delete=False)
-
-            result = channel.queue_declare(queue="test_queue", durable=True, arguments={'x-max-priority':10})
-            channel.queue_bind(exchange="test_exchange", queue=result.method.queue, routing_key="text_message")
-
-            channel.basic_consume(on_message_callback=messageHandler, queue=result.method.queue, consumer_tag="test_consumer_tag")
-
-            channel.start_consuming()
+            self.channel.start_consuming()
 
         except Exception:
             logger.exception("Basic consumer failing")

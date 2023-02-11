@@ -29,6 +29,7 @@ __version__ = "V0.07"
 import unittest
 import time
 import logging
+import argparse
 
 if __package__ is None or __package__ == "":
     import sys
@@ -52,24 +53,25 @@ logger = logging.getLogger()
 inmain = True if __name__ == "__main__" else False
 
 
-@unittest.skipUnless(Features().haveRbmqTestServer() and inmain, "require Rbmq Test Environment and started from command line")
+# @unittest.skipUnless(Features().haveRbmqTestServer() and inmain, "require Rbmq Test Environment and started from command line")
 class MessagePublisherBasicTests(unittest.TestCase):
     def setUp(self):
         self.__numMessages = 50
 
     def testPublishMessages(self):
         """Publish numMessages messages to the test queue -"""
+        global LOCAL
         startTime = time.time()
         logger.debug("Starting")
         try:
-            mp = MessagePublisher()
+            mp = MessagePublisher(LOCAL)
             #
             for ii in range(1, self.__numMessages + 1):
                 message = "Test message %5d" % ii
-                mp.publish(message, exchangeName="test_exchange", queueName="test_queue", routingKey="text_message")
+                mp.publish(message, exchangeName="test_exchange", queueName="test_queue", routingKey="text_message", priority=0)
             #
             #  Send a quit message to shutdown an associated test consumer -
-            mp.publish("quit", exchangeName="test_exchange", queueName="test_queue", routingKey="text_message")
+            mp.publish("quit", exchangeName="test_exchange", queueName="test_queue", routingKey="text_message", priority=0)
         except Exception:
             logger.exception("Publish request failing")
             self.fail()
@@ -86,5 +88,11 @@ def suitePublishRequest():
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
+    parser.add_argument('-l', '--local', action='store_true', help='run on local host')
+    args = parser.parse_args()
+    LOCAL = False
+    if args.local:
+        LOCAL = True
     runner = unittest.TextTestRunner(failfast=True)
     runner.run(suitePublishRequest())

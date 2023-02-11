@@ -28,6 +28,7 @@ __version__ = "V0.07"
 import unittest
 import time
 import logging
+import argparse
 
 if __package__ is None or __package__ == "":
     import sys
@@ -59,17 +60,21 @@ class MessageConsumer(MessageConsumerBase):
         return True
 
 
-@unittest.skipUnless(Features().haveRbmqTestServer(), "require Rbmq Test Environment")
+# @unittest.skipUnless(Features().haveRbmqTestServer(), "require Rbmq Test Environment")
 @unittest.skipUnless(inmain, "require running from main()")
 class MessageConsumerBaseTests(unittest.TestCase):
     def testMessageConsumer(self):
         """Test case:  run async consumer"""
+        global LOCAL
         startTime = time.time()
         logger.info("Starting")
         try:
             mqc = MessageQueueConnection()
-            url = mqc._getSslConnectionUrl()  # pylint: disable=protected-access
-            mc = MessageConsumer(amqpUrl=url)
+            if LOCAL:
+                url = 'localhost'
+            else:
+                url = mqc._getSslConnectionUrl()  # pylint: disable=protected-access
+            mc = MessageConsumer(amqpUrl=url, local=LOCAL)
             mc.setQueue(queueName="test_queue", routingKey="text_message")
             mc.setExchange(exchange="test_exchange", exchangeType="topic")
             try:
@@ -92,5 +97,11 @@ def suiteMessageConsumer():
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
+    parser.add_argument('-l', '--local', action='store_true', help='run on local host')
+    args = parser.parse_args()
+    LOCAL = False
+    if args.local:
+        LOCAL = True
     runner = unittest.TextTestRunner(failfast=True)
     runner.run(suiteMessageConsumer())

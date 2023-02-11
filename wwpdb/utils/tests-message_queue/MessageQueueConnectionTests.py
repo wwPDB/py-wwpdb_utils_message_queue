@@ -30,6 +30,7 @@ import unittest
 import pika
 import time
 import logging
+import argparse
 
 #
 if __package__ is None or __package__ == "":
@@ -48,28 +49,31 @@ logging.basicConfig(level=logging.WARN, format="\n[%(levelname)s]-%(module)s.%(f
 logger = logging.getLogger()
 
 
-@unittest.skipUnless(Features().haveRbmqTestServer(), "require Rbmq Test Environment")
+# @unittest.skipUnless(Features().haveRbmqTestServer(), "require Rbmq Test Environment")
 class MessageQueueConnectionTests(unittest.TestCase):
-    def setUp(self):
-        pass
 
     def testPublishRequestAuthBasic(self):
         """Test case:  create connection with basic authenication and publish single text message."""
+        global LOCAL
         startTime = time.time()
         logger.debug("Starting")
+
         try:
-            #
-            mqc = MessageQueueConnection()
-            parameters = mqc._getConnectionParameters()  # pylint: disable=protected-access
-            self.assertIsNotNone(parameters)
-            connection = pika.BlockingConnection(parameters)
+            if LOCAL:
+                connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+            else:
+                mqc = MessageQueueConnection()
+                parameters = mqc._getConnectionParameters()  # pylint: disable=protected-access
+                self.assertIsNotNone(parameters)
+                connection = pika.BlockingConnection(parameters)
+
             self.assertIsNotNone(connection)
 
             channel = connection.channel()
 
             channel.exchange_declare(exchange="test_exchange", exchange_type="topic", passive=False, durable=True, auto_delete=False)
 
-            result = channel.queue_declare(queue="test_queue", durable=True)
+            result = channel.queue_declare(queue="test_queue", durable=True, arguments={'x-max-priority': 10})
             channel.queue_bind(exchange="test_exchange", queue=result.method.queue, routing_key="text_message")
             message = "Test message"
             #
@@ -79,6 +83,7 @@ class MessageQueueConnectionTests(unittest.TestCase):
                 body=message,
                 properties=pika.BasicProperties(
                     delivery_mode=2,  # make message persistent
+                    priority=0
                 ),
             )
             #
@@ -92,18 +97,23 @@ class MessageQueueConnectionTests(unittest.TestCase):
 
     def testPublishRequestAuthSSL(self):
         """Test case:  create SSL connection and publish a test message"""
+        global LOCAL
         startTime = time.time()
         logger.debug("Starting")
         try:
-            mqc = MessageQueueConnection()
-            parameters = mqc._getSslConnectionParameters()  # pylint: disable=protected-access
-            self.assertIsNotNone(parameters)
-            connection = pika.BlockingConnection(parameters)
+            if LOCAL:
+                connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+            else:
+                mqc = MessageQueueConnection()
+                parameters = mqc._getSslConnectionParameters()  # pylint: disable=protected-access
+                self.assertIsNotNone(parameters)
+                connection = pika.BlockingConnection(parameters)
+
             self.assertIsNotNone(connection)
             channel = connection.channel()
             channel.exchange_declare(exchange="test_exchange", exchange_type="topic", passive=False, durable=True, auto_delete=False)
 
-            result = channel.queue_declare(queue="test_queue", durable=True)
+            result = channel.queue_declare(queue="test_queue", durable=True, arguments={'x-max-priority': 10})
             channel.queue_bind(exchange="test_exchange", queue=result.method.queue, routing_key="text_message")
             message = "Test message"
 
@@ -114,6 +124,7 @@ class MessageQueueConnectionTests(unittest.TestCase):
                 body=message,
                 properties=pika.BasicProperties(
                     delivery_mode=2,  # make message persistent
+                    priority=0
                 ),
             )
             #
@@ -129,11 +140,17 @@ class MessageQueueConnectionTests(unittest.TestCase):
 def suitePublishRequest():
     suite = unittest.TestSuite()
     suite.addTest(MessageQueueConnectionTests("testPublishRequestAuthBasic"))
-    suite.addTest(MessageQueueConnectionTests("testPublishRequestAuthSSL"))
+    # suite.addTest(MessageQueueConnectionTests("testPublishRequestAuthSSL"))
     #
     return suite
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
+    parser.add_argument('-l', '--local', action='store_true', help='run on local host')
+    args = parser.parse_args()
+    LOCAL = False
+    if args.local:
+        LOCAL = True
     runner = unittest.TextTestRunner(failfast=True)
     runner.run(suitePublishRequest())

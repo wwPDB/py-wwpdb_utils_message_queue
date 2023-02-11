@@ -46,9 +46,13 @@ class MessageConsumerWorker(object):
         self.__setup()
 
     def __setup(self):
-        mqc = MessageQueueConnection()
-        url = mqc._getSslConnectionUrl()  # pylint: disable=protected-access
-        self.__mc = MessageConsumer(amqpUrl=url)
+        global LOCAL
+        if LOCAL:
+            url = 'localhost'
+        else:
+            mqc = MessageQueueConnection()
+            url = mqc._getSslConnectionUrl()  # pylint: disable=protected-access
+        self.__mc = MessageConsumer(amqpUrl=url, local=LOCAL)
         self.__mc.setQueue(queueName="test_queue", routingKey="text_message")
         self.__mc.setExchange(exchange="test_exchange", exchangeType="topic")
         #
@@ -95,22 +99,10 @@ class MyDetachedProcess(DetachedProcessBase):
         except Exception as _e:  # noqa: F841
             pass
 
-
-def main():
+if __name__ == "__main__":
     # adding a conservative permission mask for this
     # os.umask(0o022)
     #
-    siteId = getSiteId(defaultSiteId=None)
-    cI = ConfigInfo(siteId)
-
-    #    topPath = cI.get('SITE_WEB_APPS_TOP_PATH')
-    topSessionPath = cI.get("SITE_WEB_APPS_TOP_SESSIONS_PATH")
-
-    #
-    myFullHostName = platform.uname()[1]
-    myHostName = str(myFullHostName.split(".")[0]).lower()
-    #
-    wsLogDirPath = os.path.join(topSessionPath, "ws-logs")
 
     #  Setup logging  --
     now = time.strftime("%Y-%m-%d", time.localtime())
@@ -122,16 +114,45 @@ def main():
     parser.add_option("--restart", default=False, action="store_true", dest="restartOp", help="Restart consumer client process")
     parser.add_option("--status", default=False, action="store_true", dest="statusOp", help="Report consumer client process status")
 
+    parser.add_option("--local", action="store_true", help='run on local machine')
+
     # parser.add_option("-v", "--verbose", default=False, action="store_true", dest="verbose", help="Enable verbose output")
     parser.add_option("--debug", default=1, type="int", dest="debugLevel", help="Debug level (default=1) [0-3]")
     parser.add_option("--instance", default=1, type="int", dest="instanceNo", help="Instance number [1-n]")
     #
     (options, _args) = parser.parse_args()
     #
+    LOCAL = False
+    if options.local:
+        LOCAL = True
+        parentdir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+        topSessionPath = os.path.join(parentdir, "tests-message_queue", "test-output")
+        if not os.path.exists(topSessionPath):
+            print('making path %s' % topSessionPath)
+            os.makedirs(topSessionPath, exist_ok=True)
+    else:
+        siteId = getSiteId(defaultSiteId=None)
+        cI = ConfigInfo(siteId)
+        #    topPath = cI.get('SITE_WEB_APPS_TOP_PATH')
+        topSessionPath = cI.get("SITE_WEB_APPS_TOP_SESSIONS_PATH")
+    #
+    myFullHostName = platform.uname()[1]
+    myHostName = str(myFullHostName.split(".")[0]).lower()
+    #
+    wsLogDirPath = os.path.join(topSessionPath, "ws-logs")
+
     pidFilePath = os.path.join(wsLogDirPath, myHostName + "_" + str(options.instanceNo) + ".pid")
     stdoutFilePath = os.path.join(wsLogDirPath, myHostName + "_" + str(options.instanceNo) + "_stdout.log")
     stderrFilePath = os.path.join(wsLogDirPath, myHostName + "_" + str(options.instanceNo) + "_stderr.log")
     wfLogFilePath = os.path.join(wsLogDirPath, myHostName + "_" + str(options.instanceNo) + "_" + now + ".log")
+    #
+    if not os.path.exists(wfLogFilePath):
+        if not os.path.exists(os.path.dirname(wfLogFilePath)):
+            print('making path %s' % os.path.dirname(wfLogFilePath))
+            os.makedirs(os.path.dirname(wfLogFilePath))
+        print('making file %s' % wfLogFilePath)
+        with open(wfLogFilePath, 'ab'):
+            os.utime(wfLogFilePath, (time.time(), time.time()))
     #
     logger = logging.getLogger(name="root")  # pylint: disable=redefined-outer-name
     logging.captureWarnings(True)
@@ -170,6 +191,3 @@ def main():
     else:
         pass
 
-
-if __name__ == "__main__":
-    main()

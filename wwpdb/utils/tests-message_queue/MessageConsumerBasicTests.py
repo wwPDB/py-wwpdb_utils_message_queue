@@ -29,6 +29,7 @@ import unittest
 import pika
 import time
 import logging
+import argparse
 
 if __package__ is None or __package__ == "":
     import sys
@@ -66,22 +67,26 @@ def messageHandler(channel, method, header, body):  # pylint: disable=unused-arg
     return
 
 
-@unittest.skipUnless(Features().haveRbmqTestServer() and inmain, "require Rbmq Test Environment and run from commandline")
+# @unittest.skipUnless(Features().haveRbmqTestServer() and inmain, "require Rbmq Test Environment and run from commandline")
 class MessageConsumerBasicTests(unittest.TestCase):
     def testConsumeBasic(self):
         """Test case:  publish single text message basic authentication"""
+        global LOCAL
         startTime = time.time()
         logger.debug("Starting")
         try:
-            mqc = MessageQueueConnection()
-            parameters = mqc._getConnectionParameters()  # pylint: disable=protected-access
+            if LOCAL:
+                connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+            else:
+                mqc = MessageQueueConnection()
+                parameters = mqc._getConnectionParameters()  # pylint: disable=protected-access
+                connection = pika.BlockingConnection(parameters)
 
-            connection = pika.BlockingConnection(parameters)
             channel = connection.channel()
 
             channel.exchange_declare(exchange="test_exchange", exchange_type="topic", durable=True, auto_delete=False)
 
-            result = channel.queue_declare(queue="test_queue", durable=True)
+            result = channel.queue_declare(queue="test_queue", durable=True, arguments={'x-max-priority':10})
             channel.queue_bind(exchange="test_exchange", queue=result.method.queue, routing_key="text_message")
 
             channel.basic_consume(on_message_callback=messageHandler, queue=result.method.queue, consumer_tag="test_consumer_tag")
@@ -96,20 +101,23 @@ class MessageConsumerBasicTests(unittest.TestCase):
 
     def testConsumeSSL(self):
         """Test case:  publish single text message basic authentication"""
+        global LOCAL
         startTime = time.time()
         logger.debug("Starting")
         try:
-            mqc = MessageQueueConnection()
-            url = mqc._getSslConnectionUrl()  # pylint: disable=protected-access
-            parameters = pika.URLParameters(url)
-
-            connection = pika.BlockingConnection(parameters)
+            if LOCAL:
+                connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+            else:
+                mqc = MessageQueueConnection()
+                url = mqc._getSslConnectionUrl()  # pylint: disable=protected-access
+                parameters = pika.URLParameters(url)
+                connection = pika.BlockingConnection(parameters)
 
             channel = connection.channel()
 
             channel.exchange_declare(exchange="test_exchange", exchange_type="topic", durable=True, auto_delete=False)
 
-            result = channel.queue_declare(queue="test_queue", durable=True)
+            result = channel.queue_declare(queue="test_queue", durable=True, arguments={'x-max-priority':10})
             channel.queue_bind(exchange="test_exchange", queue=result.method.queue, routing_key="text_message")
 
             channel.basic_consume(on_message_callback=messageHandler, queue=result.method.queue, consumer_tag="test_consumer_tag")
@@ -132,5 +140,11 @@ def suiteConsumeRequest():
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
+    parser.add_argument('-l', '--local', action='store_true', help='run on local host')
+    args = parser.parse_args()
+    LOCAL = False
+    if args.local:
+        LOCAL = True
     runner = unittest.TextTestRunner(failfast=True)
     runner.run(suiteConsumeRequest())

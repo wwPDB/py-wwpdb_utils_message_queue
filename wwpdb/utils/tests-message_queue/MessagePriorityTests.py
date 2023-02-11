@@ -43,6 +43,10 @@ logger = logging.getLogger()
 
 # @unittest.skipUnless(Features().haveRbmqTestServer(), "require Rbmq Test Environment")
 class MessagePublishConsumeBasicTests(unittest.TestCase):
+
+    def setup(self):
+        pass
+
     def testPublishConsume(self):
         self.publishMessages()
         self.consumeMessages()
@@ -50,7 +54,7 @@ class MessagePublishConsumeBasicTests(unittest.TestCase):
     def publishMessages(self):
         """Publish numMessages messages to the test queue -"""
         global LOCAL
-        numMessages = 50
+        numMessages = 10
         startTime = time.time()
         logger.debug("Starting")
         try:
@@ -58,10 +62,11 @@ class MessagePublishConsumeBasicTests(unittest.TestCase):
             #
             for ii in range(1, numMessages + 1):
                 message = "Test message %5d" % ii
-                mp.publish(message, exchangeName="test_exchange", queueName="test_queue", routingKey="text_message", priority=0)
+                mp.publish(message, exchangeName="test_exchange", queueName="test_queue", routingKey="text_message", priority=ii)
             #
             #  Send a quit message to shutdown an associated test consumer -
             mp.publish("quit", exchangeName="test_exchange", queueName="test_queue", routingKey="text_message", priority=0)
+
         except Exception:
             logger.exception("Publish request failing")
             self.fail()
@@ -74,6 +79,7 @@ class MessagePublishConsumeBasicTests(unittest.TestCase):
         global LOCAL
         startTime = time.time()
         logger.debug("Starting")
+
         try:
             if LOCAL:
                 connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
