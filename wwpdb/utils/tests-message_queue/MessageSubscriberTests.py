@@ -6,7 +6,7 @@
 #
 ##
 """
-Test of direct exchange without using MessageSubscriber class.
+Test of direct exchange using MessageSubscriber class.
 Subscriber variation on previous publish consume tests.
 """
 
@@ -15,7 +15,6 @@ __author__ = "James Smith"
 __email__ = "james.smith@rcsb.org"
 __license__ = "Creative Commons Attribution 3.0 Unported"
 __version__ = "V0.07"
-
 
 import unittest
 import time
@@ -26,10 +25,12 @@ import argparse
 if __package__ is None or __package__ == "":
     import sys
     from os import path
+
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 
 from wwpdb.utils.message_queue.MessagePublisher import MessagePublisher
 from wwpdb.utils.message_queue.MessageQueueConnection import MessageQueueConnection
+from wwpdb.utils.message_queue.MessageSubscriberBase import MessageSubscriberBase
 from wwpdb.utils.testing.Features import Features
 
 #
@@ -37,11 +38,23 @@ logging.basicConfig(level=logging.INFO, format="\n[%(levelname)s]-%(module)s.%(f
 logger = logging.getLogger()
 
 
+class MessageSubscriber(MessageSubscriberBase):
+    def __init__(self, url, local=False):
+        super().__init__(url, local=local)
+
+    def workerMethod(self, msgBody, deliveryTag=None):
+        logger.info("Message body %r", msgBody)
+        return True
+
+
 # @unittest.skipUnless(Features().haveRbmqTestServer(), "require Rbmq Test Environment")
 class MessagePublishSubscribeBasicTests(unittest.TestCase):
     def testPublishSubscribe(self):
         self.initialize()
-        self.publishMessages()
+        # both with and without priority are working
+        self.publishMessagesWithPriority()
+        # not sure why not able to have another consume function here...doesn't reach next set of messages
+        self.publishMessagesWithoutPriority()
         self.consumeMessages()
 
     def initialize(self):
@@ -56,20 +69,13 @@ class MessagePublishSubscribeBasicTests(unittest.TestCase):
 
         try:
             if LOCAL:
-                connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+                url = None
             else:
                 mqc = MessageQueueConnection()
-                parameters = mqc._getConnectionParameters()  # pylint: disable=protected-access
-                connection = pika.BlockingConnection(parameters)
+                url = mqc._getDefaultConnectionUrl()
 
-            self.__channel = connection.channel()
-
-            self.__channel.exchange_declare(exchange=self.__exchange_name, exchange_type=self.__exchange_type, durable=True, auto_delete=False)
-
-            result = self.__channel.queue_declare(queue='', exclusive=True, durable=True, arguments={'x-max-priority':10})
-            self.__queue_name = result.method.queue
-
-            self.__channel.queue_bind(exchange=self.__exchange_name, queue=self.__queue_name, routing_key=self.__routing_key)
+            self.__subscriber = MessageSubscriber(url, local=LOCAL)
+            self.__subscriber.add_exchange(self.__exchange_name)
 
         except Exception:
             logger.exception("Basic consumer failing")
@@ -78,7 +84,7 @@ class MessagePublishSubscribeBasicTests(unittest.TestCase):
         endTime = time.time()
         logger.debug("Completed (%f seconds)", (endTime - startTime))
 
-    def publishMessages(self):
+    def publishMessagesWithPriority(self):
         """Publish numMessages messages to the test queue -"""
         global LOCAL
         numMessages = 10
@@ -100,35 +106,41 @@ class MessagePublishSubscribeBasicTests(unittest.TestCase):
         endTime = time.time()
         logger.debug("Completed (%f seconds)", (endTime - startTime))
 
-    def consumeMessages(self):
-        """Test case:  publish single text message basic authentication"""
+    def publishMessagesWithoutPriority(self):
+        """Publish numMessages messages to the test queue -"""
+        global LOCAL
+        numMessages = 10
         startTime = time.time()
         logger.debug("Starting")
         try:
-
-            self.__channel.basic_consume(on_message_callback=messageHandler, queue=self.__queue_name, consumer_tag="test_consumer_tag")
-
-            self.__channel.start_consuming()
-
+            mp = MessagePublisher(local=LOCAL)
+            #
+            for ii in range(1, numMessages + 1):
+                message = "Test message %5d" % ii
+                mp.publishDirect(message, exchangeName=self.__exchange_name, priority=None)
+            #
+            #  Send a quit message to shutdown an associated test consumer -
+            mp.publishDirect("quit", exchangeName=self.__exchange_name, priority=None)
         except Exception:
-            logger.exception("Basic consumer failing")
+            logger.exception("Publish request failing")
             self.fail()
 
         endTime = time.time()
         logger.debug("Completed (%f seconds)", (endTime - startTime))
 
-def messageHandler(channel, method, header, body):  # pylint: disable=unused-argument
-    channel.basic_ack(delivery_tag=method.delivery_tag)
+    def consumeMessages(self):
+        """Test case:  publish single text message basic authentication"""
+        startTime = time.time()
+        logger.debug("Starting")
 
-    if body == b"quit":
-        channel.basic_cancel(consumer_tag="test_consumer_tag")
-        channel.stop_consuming()
-        logger.info("Message body %r -- done ", body)
-    else:
-        logger.info("Message body %r", body)
-        time.sleep(0.25)
-    #
-    return
+        try:
+            self.__subscriber.run()
+        except Exception:
+            logger.exception("Basic Subscriber failing")
+            self.fail()
+
+        endTime = time.time()
+        logger.debug("Completed (%f seconds)", (endTime - startTime))
 
 
 def suitePublishSubscribeRequest():

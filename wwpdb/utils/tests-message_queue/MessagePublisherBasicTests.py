@@ -64,14 +64,14 @@ class MessagePublisherBasicTests(unittest.TestCase):
         startTime = time.time()
         logger.debug("Starting")
         try:
-            mp = MessagePublisher(LOCAL)
+            mp = MessagePublisher(local=LOCAL)
             #
             for ii in range(1, self.__numMessages + 1):
                 message = "Test message %5d" % ii
-                mp.publish(message, exchangeName="test_exchange", queueName="test_queue", routingKey="text_message", priority=0)
+                mp.publish(message, exchangeName="test_exchange", queueName="test_queue", routingKey="text_message")
             #
             #  Send a quit message to shutdown an associated test consumer -
-            mp.publish("quit", exchangeName="test_exchange", queueName="test_queue", routingKey="text_message", priority=0)
+            mp.publish("quit", exchangeName="test_exchange", queueName="test_queue", routingKey="text_message")
         except Exception:
             logger.exception("Publish request failing")
             self.fail()

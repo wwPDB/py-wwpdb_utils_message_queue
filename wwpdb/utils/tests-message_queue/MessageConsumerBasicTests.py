@@ -86,7 +86,7 @@ class MessageConsumerBasicTests(unittest.TestCase):
 
             channel.exchange_declare(exchange="test_exchange", exchange_type="topic", durable=True, auto_delete=False)
 
-            result = channel.queue_declare(queue="test_queue", durable=True, arguments={'x-max-priority':10})
+            result = channel.queue_declare(queue="test_queue", durable=True)
             channel.queue_bind(exchange="test_exchange", queue=result.method.queue, routing_key="text_message")
 
             channel.basic_consume(on_message_callback=messageHandler, queue=result.method.queue, consumer_tag="test_consumer_tag")
@@ -117,7 +117,7 @@ class MessageConsumerBasicTests(unittest.TestCase):
 
             channel.exchange_declare(exchange="test_exchange", exchange_type="topic", durable=True, auto_delete=False)
 
-            result = channel.queue_declare(queue="test_queue", durable=True, arguments={'x-max-priority':10})
+            result = channel.queue_declare(queue="test_queue", durable=True)
             channel.queue_bind(exchange="test_exchange", queue=result.method.queue, routing_key="text_message")
 
             channel.basic_consume(on_message_callback=messageHandler, queue=result.method.queue, consumer_tag="test_consumer_tag")

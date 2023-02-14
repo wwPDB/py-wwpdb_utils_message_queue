@@ -58,14 +58,14 @@ class MessagePublishConsumeBasicTests(unittest.TestCase):
         startTime = time.time()
         logger.debug("Starting")
         try:
-            mp = MessagePublisher(LOCAL)
+            mp = MessagePublisher(local=LOCAL)
             #
             for ii in range(1, numMessages + 1):
                 message = "Test message %5d" % ii
-                mp.publish(message, exchangeName="test_exchange", queueName="test_queue", routingKey="text_message", priority=ii)
+                mp.publish(message, exchangeName="test_priority_exchange", queueName="test_priority_queue", routingKey="text_message", priority=ii)
             #
             #  Send a quit message to shutdown an associated test consumer -
-            mp.publish("quit", exchangeName="test_exchange", queueName="test_queue", routingKey="text_message", priority=0)
+            mp.publish("quit", exchangeName="test_priority_exchange", queueName="test_priority_queue", routingKey="text_message", priority=0)
 
         except Exception:
             logger.exception("Publish request failing")
@@ -90,10 +90,10 @@ class MessagePublishConsumeBasicTests(unittest.TestCase):
 
             channel = connection.channel()
 
-            channel.exchange_declare(exchange="test_exchange", exchange_type="topic", durable=True, auto_delete=False)
+            channel.exchange_declare(exchange="test_priority_exchange", exchange_type="topic", durable=True, auto_delete=False)
 
-            result = channel.queue_declare(queue="test_queue", durable=True, arguments={'x-max-priority':10})
-            channel.queue_bind(exchange="test_exchange", queue=result.method.queue, routing_key="text_message")
+            result = channel.queue_declare(queue="test_priority_queue", durable=True, arguments={'x-max-priority':10})
+            channel.queue_bind(exchange="test_priority_exchange", queue=result.method.queue, routing_key="text_message")
 
             channel.basic_consume(on_message_callback=messageHandler, queue=result.method.queue, consumer_tag="test_consumer_tag")
 

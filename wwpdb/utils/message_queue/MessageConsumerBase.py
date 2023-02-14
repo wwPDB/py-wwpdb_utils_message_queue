@@ -42,7 +42,7 @@ class MessageConsumerBase(object):
 
     """
 
-    def __init__(self, amqpUrl, local=False):
+    def __init__(self, amqpUrl, priority=False, local=False):
         """Create a new instance of the consumer class, passing in the AMQP URL used to connect to RabbitMQ.
 
         :param str amqp_url: The AMQP url to connect with
@@ -59,7 +59,8 @@ class MessageConsumerBase(object):
         self.__queueName = None
         self.__routingKey = None
 
-        self.local = local
+        self.__priority = priority
+        self.__local = local
 
         #
         # self.__maxReconnectAttemps = 10
@@ -93,7 +94,7 @@ class MessageConsumerBase(object):
         #                              on_open_error_callback=None,
         #                              stop_ioloop_on_close=False)
 
-        if self.local:
+        if self.__local:
             return pika.BlockingConnection(pika.ConnectionParameters('localhost'))
 
         return pika.BlockingConnection(
@@ -255,7 +256,10 @@ class MessageConsumerBase(object):
 
         """
         logger.info("Declaring queue %s", queueName)
-        self._channel.queue_declare(callback=self.onQueueDeclareOk, queue=queueName, durable=True, arguments={'x-max-priority': 10})
+        if self.__priority:
+            self._channel.queue_declare(callback=self.onQueueDeclareOk, queue=queueName, durable=True, arguments={'x-max-priority': 10})
+        else:
+            self._channel.queue_declare(callback=self.onQueueDeclareOk, queue=queueName, durable=True)
 
     def onQueueDeclareOk(self, method_frame):  # pylint: disable=unused-argument
         """Method invoked on success of Queue.Declare call made when setupQueue has completed.
@@ -397,7 +401,10 @@ class MessageConsumerBase(object):
         self._connection = self.connect()
         self._channel = self._connection.channel()
         #
-        self._channel.queue_declare(queue=self.__queueName, durable=True, arguments={'x-max-priority': 10})
+        if self.__priority:
+            self._channel.queue_declare(queue=self.__queueName, durable=True, arguments={'x-max-priority': 10})
+        else:
+            self._channel.queue_declare(queue=self.__queueName, durable=True)
         self._channel.basic_qos(prefetch_count=1)
         self._channel.basic_consume(queue=self.__queueName, on_message_callback=self.onMessage)
         #

@@ -73,7 +73,7 @@ class MessageQueueConnectionTests(unittest.TestCase):
 
             channel.exchange_declare(exchange="test_exchange", exchange_type="topic", passive=False, durable=True, auto_delete=False)
 
-            result = channel.queue_declare(queue="test_queue", durable=True, arguments={'x-max-priority': 10})
+            result = channel.queue_declare(queue="test_queue", durable=True)
             channel.queue_bind(exchange="test_exchange", queue=result.method.queue, routing_key="text_message")
             message = "Test message"
             #
@@ -83,7 +83,6 @@ class MessageQueueConnectionTests(unittest.TestCase):
                 body=message,
                 properties=pika.BasicProperties(
                     delivery_mode=2,  # make message persistent
-                    priority=0
                 ),
             )
             #
@@ -113,7 +112,7 @@ class MessageQueueConnectionTests(unittest.TestCase):
             channel = connection.channel()
             channel.exchange_declare(exchange="test_exchange", exchange_type="topic", passive=False, durable=True, auto_delete=False)
 
-            result = channel.queue_declare(queue="test_queue", durable=True, arguments={'x-max-priority': 10})
+            result = channel.queue_declare(queue="test_queue", durable=True)
             channel.queue_bind(exchange="test_exchange", queue=result.method.queue, routing_key="text_message")
             message = "Test message"
 
@@ -124,7 +123,6 @@ class MessageQueueConnectionTests(unittest.TestCase):
                 body=message,
                 properties=pika.BasicProperties(
                     delivery_mode=2,  # make message persistent
-                    priority=0
                 ),
             )
             #

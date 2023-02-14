@@ -42,17 +42,17 @@ class MessageConsumer(MessageConsumerBase):
 
 
 class MessageConsumerWorker(object):
-    def __init__(self):
+    def __init__(self,local=False):
+        self.__local = local
         self.__setup()
 
     def __setup(self):
-        global LOCAL
-        if LOCAL:
+        if self.__local:
             url = 'localhost'
         else:
             mqc = MessageQueueConnection()
             url = mqc._getSslConnectionUrl()  # pylint: disable=protected-access
-        self.__mc = MessageConsumer(amqpUrl=url, local=LOCAL)
+        self.__mc = MessageConsumer(amqpUrl=url, local=self.__local)
         self.__mc.setQueue(queueName="test_queue", routingKey="text_message")
         self.__mc.setExchange(exchange="test_exchange", exchangeType="topic")
         #
@@ -84,9 +84,10 @@ class MyDetachedProcess(DetachedProcessBase):
     Illustrates the use of python logging and various I/O channels in detached process.
     """
 
-    def __init__(self, pidFile="/tmp/DetachedProcessBase.pid", stdin=os.devnull, stdout=os.devnull, stderr=os.devnull, wrkDir="/", gid=None, uid=None):
+    def __init__(self, pidFile="/tmp/DetachedProcessBase.pid", stdin=os.devnull, stdout=os.devnull, stderr=os.devnull, wrkDir="/", gid=None, uid=None, local=False):
         super(MyDetachedProcess, self).__init__(pidFile=pidFile, stdin=stdin, stdout=stdout, stderr=stderr, wrkDir=wrkDir, gid=gid, uid=uid)
-        self.__mcw = MessageConsumerWorker()
+        self.__local = local
+        self.__mcw = MessageConsumerWorker(local=self.__local)
 
     def run(self):
         logger.info("STARTING detached run method")
@@ -122,9 +123,7 @@ if __name__ == "__main__":
     #
     (options, _args) = parser.parse_args()
     #
-    LOCAL = False
     if options.local:
-        LOCAL = True
         parentdir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
         topSessionPath = os.path.join(parentdir, "tests-message_queue", "test-output")
         if not os.path.exists(topSessionPath):
@@ -171,7 +170,7 @@ if __name__ == "__main__":
         logger.setLevel(logging.ERROR)
     #
     #
-    myDP = MyDetachedProcess(pidFile=pidFilePath, stdout=stdoutFilePath, stderr=stderrFilePath, wrkDir=wsLogDirPath)
+    myDP = MyDetachedProcess(pidFile=pidFilePath, stdout=stdoutFilePath, stderr=stderrFilePath, wrkDir=wsLogDirPath, local=options.local)
 
     if options.startOp:
         sys.stdout.write("+DetachedMessageConsumer() starting consumer service at %s\n" % lt)

@@ -29,6 +29,7 @@ __version__ = "V0.07"
 import pika
 import time
 import logging
+import re
 
 #
 from wwpdb.utils.message_queue.MessageQueueConnection import MessageQueueConnection
@@ -39,18 +40,23 @@ logger = logging.getLogger()
 class MessagePublisher(object):
 
     def __init__(self, local=False):
-        self.local = local
+        self.__local = local
+        self.__subscriber_exchange_type = 'direct'
+        self.__subscriber_routing_key = 'subscriber_routing_key'
 
-    def publish(self, message, exchangeName, queueName, routingKey, priority=0):
+    def publish(self, message, exchangeName, queueName, routingKey, priority=None):
+        # priority is either None or an integer between 0 and 10
+        if priority and not re.match(r'^\d+$', str(priority)):
+            priority = 0
         return self.__publishMessage(message=message, exchangeName=exchangeName, queueName=queueName, routingKey=routingKey, priority=priority)
 
-    def __publishMessage(self, message, exchangeName, queueName, routingKey, durableFlag=True, deliveryMode=2, priority=0):
+    def __publishMessage(self, message, exchangeName, queueName, routingKey, durableFlag=True, deliveryMode=2, priority=None):
         """publish the input message -"""
         startTime = time.time()
         logger.debug("Starting to publish message ")
         ok = False
         try:
-            if self.local:
+            if self.__local:
                 connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
             else:
                 mqc = MessageQueueConnection()
@@ -60,20 +66,33 @@ class MessagePublisher(object):
             channel = connection.channel()
             channel.exchange_declare(exchange=exchangeName, exchange_type="topic", durable=True, auto_delete=False)
 
-            result = channel.queue_declare(queue=queueName, durable=durableFlag, arguments={'x-max-priority': 10})
+            if priority:
+                result = channel.queue_declare(queue=queueName, durable=durableFlag, arguments={'x-max-priority': 10})
+            else:
+                result = channel.queue_declare(queue=queueName, durable=durableFlag)
 
             channel.queue_bind(exchange=exchangeName, queue=result.method.queue, routing_key=routingKey)
 
             #
-            channel.basic_publish(
-                exchange=exchangeName,
-                routing_key=routingKey,
-                body=message,
-                properties=pika.BasicProperties(
-                    delivery_mode=deliveryMode,  # set message persistence
-                    priority=priority
-                ),
-            )
+            if priority:
+                channel.basic_publish(
+                    exchange=exchangeName,
+                    routing_key=routingKey,
+                    body=message,
+                    properties=pika.BasicProperties(
+                        delivery_mode=deliveryMode,  # set message persistence
+                        priority=priority
+                    ),
+                )
+            else:
+                channel.basic_publish(
+                    exchange=exchangeName,
+                    routing_key=routingKey,
+                    body=message,
+                    properties=pika.BasicProperties(
+                        delivery_mode=deliveryMode,  # set message persistence
+                    ),
+                )
             #
             ok = True
             connection.close()
@@ -84,18 +103,21 @@ class MessagePublisher(object):
         logger.debug("Completed publish request in (%f seconds) status %r", endTime - startTime, ok)
         return ok
 
-    # test of direct exchange or topic exchange with extensive reliance on exchanges
+    # direct exchange pattern having extensive reliance on exchanges, with no queue declare or queue bind from publisher
 
-    def publishDirect(self, message, exchangeName, queueName, routingKey, priority=0):
-        return self.__publishDirect(message=message, exchangeName=exchangeName, queueName=queueName, routingKey=routingKey, priority=priority)
+    def publishDirect(self, message, exchangeName, priority=None):
+        # priority is either None or an integer between 0 and 10
+        if priority and not re.match(r'^\d+$', str(priority)):
+            priority = 0
+        return self.__publishDirect(message=message, exchangeName=exchangeName, priority=priority)
 
-    def __publishDirect(self, message, exchangeName, queueName, routingKey, durableFlag=True, deliveryMode=2, priority=0):
+    def __publishDirect(self, message, exchangeName, priority=None, durableFlag=True, deliveryMode=2):
         """publish the input message -"""
         startTime = time.time()
         logger.debug("Starting to publish message ")
         ok = False
         try:
-            if self.local:
+            if self.__local:
                 connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
             else:
                 mqc = MessageQueueConnection()
@@ -103,21 +125,28 @@ class MessagePublisher(object):
                 connection = pika.BlockingConnection(parameters)
 
             channel = connection.channel()
-            channel.exchange_declare(exchange=exchangeName, exchange_type="topic")#, durable=True, auto_delete=False)
-
-            # result = channel.queue_declare(queue=queueName, durable=durableFlag, arguments={'x-max-priority': 10})
-            # channel.queue_bind(exchange=exchangeName, queue=result.method.queue, routing_key=routingKey)
+            channel.exchange_declare(exchange=exchangeName, exchange_type=self.__subscriber_exchange_type, durable=True, auto_delete=False)
 
             #
-            channel.basic_publish(
-                exchange=exchangeName,
-                routing_key=routingKey,
-                body=message,
-                properties=pika.BasicProperties(
-                    delivery_mode=deliveryMode,  # set message persistence
-                    priority=priority
-                ),
-            )
+            if priority:
+                channel.basic_publish(
+                    exchange=exchangeName,
+                    routing_key=self.__subscriber_routing_key,
+                    body=message,
+                    properties=pika.BasicProperties(
+                        delivery_mode=deliveryMode,  # set message persistence
+                        priority=priority
+                    ),
+                )
+            else:
+                channel.basic_publish(
+                    exchange=exchangeName,
+                    routing_key=self.__subscriber_routing_key,
+                    body=message,
+                    properties=pika.BasicProperties(
+                        delivery_mode=deliveryMode,  # set message persistence
+                    ),
+                )
             #
             ok = True
             connection.close()
