@@ -42,7 +42,8 @@ logger = logging.getLogger()
 
 
 # @unittest.skipUnless(Features().haveRbmqTestServer(), "require Rbmq Test Environment")
-class MessagePublishConsumeBasicTests(unittest.TestCase):
+class MessagePriorityTests(unittest.TestCase):
+    LOCAL = False
 
     def setup(self):
         pass
@@ -53,19 +54,18 @@ class MessagePublishConsumeBasicTests(unittest.TestCase):
 
     def publishMessages(self):
         """Publish numMessages messages to the test queue -"""
-        global LOCAL
         numMessages = 10
         startTime = time.time()
         logger.debug("Starting")
         try:
-            mp = MessagePublisher(local=LOCAL)
+            mp = MessagePublisher(local=self.LOCAL)
             #
             for ii in range(1, numMessages + 1):
                 message = "Test message %5d" % ii
                 mp.publish(message, exchangeName="test_priority_exchange", queueName="test_priority_queue", routingKey="text_message", priority=ii)
             #
             #  Send a quit message to shutdown an associated test consumer -
-            mp.publish("quit", exchangeName="test_priority_exchange", queueName="test_priority_queue", routingKey="text_message", priority=0)
+            mp.publish("quit", exchangeName="test_priority_exchange", queueName="test_priority_queue", routingKey="text_message", priority=1)
 
         except Exception:
             logger.exception("Publish request failing")
@@ -76,12 +76,11 @@ class MessagePublishConsumeBasicTests(unittest.TestCase):
 
     def consumeMessages(self):
         """Test case:  publish single text message basic authentication"""
-        global LOCAL
         startTime = time.time()
         logger.debug("Starting")
 
         try:
-            if LOCAL:
+            if self.LOCAL:
                 connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
             else:
                 mqc = MessageQueueConnection()
@@ -123,7 +122,7 @@ def messageHandler(channel, method, header, body):  # pylint: disable=unused-arg
 
 def suitePublishConsumeRequest():
     suite = unittest.TestSuite()
-    suite.addTest(MessagePublishConsumeBasicTests("testPublishConsume"))
+    suite.addTest(MessagePriorityTests("testPublishConsume"))
     #
     return suite
 
@@ -135,5 +134,6 @@ if __name__ == "__main__":
     LOCAL = False
     if args.local:
         LOCAL = True
+    MessagePriorityTests.LOCAL = LOCAL
     runner = unittest.TextTestRunner(failfast=True)
     runner.run(suitePublishConsumeRequest())

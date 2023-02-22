@@ -43,18 +43,19 @@ logger = logging.getLogger()
 
 # @unittest.skipUnless(Features().haveRbmqTestServer(), "require Rbmq Test Environment")
 class MessagePublishConsumeBasicTests(unittest.TestCase):
+    LOCAL = False
+
     def testPublishConsume(self):
         self.publishMessages()
         self.consumeMessages()
 
     def publishMessages(self):
         """Publish numMessages messages to the test queue -"""
-        global LOCAL
         numMessages = 50
         startTime = time.time()
         logger.debug("Starting")
         try:
-            mp = MessagePublisher(local=LOCAL)
+            mp = MessagePublisher(local=self.LOCAL)
             #
             for ii in range(1, numMessages + 1):
                 message = "Test message %5d" % ii
@@ -71,11 +72,10 @@ class MessagePublishConsumeBasicTests(unittest.TestCase):
 
     def consumeMessages(self):
         """Test case:  publish single text message basic authentication"""
-        global LOCAL
         startTime = time.time()
         logger.debug("Starting")
         try:
-            if LOCAL:
+            if self.LOCAL:
                 connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
             else:
                 mqc = MessageQueueConnection()
@@ -129,5 +129,6 @@ if __name__ == "__main__":
     LOCAL = False
     if args.local:
         LOCAL = True
+    MessagePublishConsumeBasicTests.LOCAL = LOCAL
     runner = unittest.TextTestRunner(failfast=True)
     runner.run(suitePublishConsumeRequest())

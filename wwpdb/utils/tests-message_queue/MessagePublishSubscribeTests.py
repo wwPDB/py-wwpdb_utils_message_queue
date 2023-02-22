@@ -39,6 +39,8 @@ logger = logging.getLogger()
 
 # @unittest.skipUnless(Features().haveRbmqTestServer(), "require Rbmq Test Environment")
 class MessagePublishSubscribeBasicTests(unittest.TestCase):
+    LOCAL = False
+
     def testPublishSubscribe(self):
         self.initialize()
         self.publishMessages()
@@ -46,7 +48,6 @@ class MessagePublishSubscribeBasicTests(unittest.TestCase):
 
     def initialize(self):
         """Test case:  publish single text message basic authentication"""
-        global LOCAL
         self.__exchange_name = 'test_subscriber_exchange'
         self.__exchange_type = 'direct'
         self.__routing_key = 'subscriber_routing_key'
@@ -55,7 +56,7 @@ class MessagePublishSubscribeBasicTests(unittest.TestCase):
         logger.debug("Starting")
 
         try:
-            if LOCAL:
+            if self.LOCAL:
                 connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
             else:
                 mqc = MessageQueueConnection()
@@ -80,19 +81,18 @@ class MessagePublishSubscribeBasicTests(unittest.TestCase):
 
     def publishMessages(self):
         """Publish numMessages messages to the test queue -"""
-        global LOCAL
         numMessages = 10
         startTime = time.time()
         logger.debug("Starting")
         try:
-            mp = MessagePublisher(local=LOCAL)
+            mp = MessagePublisher(local=self.LOCAL)
             #
             for ii in range(1, numMessages + 1):
                 message = "Test message %5d" % ii
                 mp.publishDirect(message, exchangeName=self.__exchange_name, priority=ii)
             #
             #  Send a quit message to shutdown an associated test consumer -
-            mp.publishDirect("quit", exchangeName=self.__exchange_name, priority=0)
+            mp.publishDirect("quit", exchangeName=self.__exchange_name, priority=1)
         except Exception:
             logger.exception("Publish request failing")
             self.fail()
@@ -145,5 +145,6 @@ if __name__ == "__main__":
     LOCAL = False
     if args.local:
         LOCAL = True
+    MessagePublishSubscribeBasicTests.LOCAL = LOCAL
     runner = unittest.TextTestRunner(failfast=True)
     runner.run(suitePublishSubscribeRequest())

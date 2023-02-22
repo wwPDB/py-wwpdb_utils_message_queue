@@ -55,16 +55,17 @@ inmain = True if __name__ == "__main__" else False
 
 # @unittest.skipUnless(Features().haveRbmqTestServer() and inmain, "require Rbmq Test Environment and started from command line")
 class MessagePublisherBasicTests(unittest.TestCase):
+    LOCAL = False
+
     def setUp(self):
         self.__numMessages = 50
 
     def testPublishMessages(self):
         """Publish numMessages messages to the test queue -"""
-        global LOCAL
         startTime = time.time()
         logger.debug("Starting")
         try:
-            mp = MessagePublisher(local=LOCAL)
+            mp = MessagePublisher(local=self.LOCAL)
             #
             for ii in range(1, self.__numMessages + 1):
                 message = "Test message %5d" % ii
@@ -94,5 +95,6 @@ if __name__ == "__main__":
     LOCAL = False
     if args.local:
         LOCAL = True
+    MessagePublisherBasicTests.LOCAL = LOCAL
     runner = unittest.TextTestRunner(failfast=True)
     runner.run(suitePublishRequest())

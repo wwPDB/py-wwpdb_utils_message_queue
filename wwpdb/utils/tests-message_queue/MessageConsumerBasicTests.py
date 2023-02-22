@@ -69,13 +69,14 @@ def messageHandler(channel, method, header, body):  # pylint: disable=unused-arg
 
 # @unittest.skipUnless(Features().haveRbmqTestServer() and inmain, "require Rbmq Test Environment and run from commandline")
 class MessageConsumerBasicTests(unittest.TestCase):
+    LOCAL = False
+
     def testConsumeBasic(self):
         """Test case:  publish single text message basic authentication"""
-        global LOCAL
         startTime = time.time()
         logger.debug("Starting")
         try:
-            if LOCAL:
+            if self.LOCAL:
                 connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
             else:
                 mqc = MessageQueueConnection()
@@ -101,11 +102,10 @@ class MessageConsumerBasicTests(unittest.TestCase):
 
     def testConsumeSSL(self):
         """Test case:  publish single text message basic authentication"""
-        global LOCAL
         startTime = time.time()
         logger.debug("Starting")
         try:
-            if LOCAL:
+            if self.LOCAL:
                 connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
             else:
                 mqc = MessageQueueConnection()
@@ -146,5 +146,6 @@ if __name__ == "__main__":
     LOCAL = False
     if args.local:
         LOCAL = True
+    MessageConsumerBasicTests.LOCAL = LOCAL
     runner = unittest.TextTestRunner(failfast=True)
     runner.run(suiteConsumeRequest())

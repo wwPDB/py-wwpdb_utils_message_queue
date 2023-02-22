@@ -51,15 +51,15 @@ logger = logging.getLogger()
 
 # @unittest.skipUnless(Features().haveRbmqTestServer(), "require Rbmq Test Environment")
 class MessageQueueConnectionTests(unittest.TestCase):
+    LOCAL = False
 
     def testPublishRequestAuthBasic(self):
         """Test case:  create connection with basic authenication and publish single text message."""
-        global LOCAL
         startTime = time.time()
         logger.debug("Starting")
 
         try:
-            if LOCAL:
+            if self.LOCAL:
                 connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
             else:
                 mqc = MessageQueueConnection()
@@ -96,11 +96,10 @@ class MessageQueueConnectionTests(unittest.TestCase):
 
     def testPublishRequestAuthSSL(self):
         """Test case:  create SSL connection and publish a test message"""
-        global LOCAL
         startTime = time.time()
         logger.debug("Starting")
         try:
-            if LOCAL:
+            if self.LOCAL:
                 connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
             else:
                 mqc = MessageQueueConnection()
@@ -150,5 +149,6 @@ if __name__ == "__main__":
     LOCAL = False
     if args.local:
         LOCAL = True
+    MessageQueueConnectionTests.LOCAL = LOCAL
     runner = unittest.TextTestRunner(failfast=True)
     runner.run(suitePublishRequest())

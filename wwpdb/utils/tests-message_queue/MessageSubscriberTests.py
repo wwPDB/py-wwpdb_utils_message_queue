@@ -48,7 +48,9 @@ class MessageSubscriber(MessageSubscriberBase):
 
 
 # @unittest.skipUnless(Features().haveRbmqTestServer(), "require Rbmq Test Environment")
-class MessagePublishSubscribeBasicTests(unittest.TestCase):
+class MessageSubscriberTests(unittest.TestCase):
+    LOCAL = False
+
     def testPublishSubscribe(self):
         self.initialize()
         # both with and without priority are working
@@ -59,7 +61,6 @@ class MessagePublishSubscribeBasicTests(unittest.TestCase):
 
     def initialize(self):
         """Test case:  publish single text message basic authentication"""
-        global LOCAL
         self.__exchange_name = 'test_subscriber_exchange'
         self.__exchange_type = 'direct'
         self.__routing_key = 'subscriber_routing_key'
@@ -68,13 +69,13 @@ class MessagePublishSubscribeBasicTests(unittest.TestCase):
         logger.debug("Starting")
 
         try:
-            if LOCAL:
+            if self.LOCAL:
                 url = None
             else:
                 mqc = MessageQueueConnection()
                 url = mqc._getDefaultConnectionUrl()
 
-            self.__subscriber = MessageSubscriber(url, local=LOCAL)
+            self.__subscriber = MessageSubscriber(url, local=self.LOCAL)
             self.__subscriber.add_exchange(self.__exchange_name)
 
         except Exception:
@@ -86,19 +87,18 @@ class MessagePublishSubscribeBasicTests(unittest.TestCase):
 
     def publishMessagesWithPriority(self):
         """Publish numMessages messages to the test queue -"""
-        global LOCAL
         numMessages = 10
         startTime = time.time()
         logger.debug("Starting")
         try:
-            mp = MessagePublisher(local=LOCAL)
+            mp = MessagePublisher(local=self.LOCAL)
             #
             for ii in range(1, numMessages + 1):
                 message = "Test message %5d" % ii
                 mp.publishDirect(message, exchangeName=self.__exchange_name, priority=ii)
             #
             #  Send a quit message to shutdown an associated test consumer -
-            mp.publishDirect("quit", exchangeName=self.__exchange_name, priority=0)
+            mp.publishDirect("quit", exchangeName=self.__exchange_name, priority=1)
         except Exception:
             logger.exception("Publish request failing")
             self.fail()
@@ -108,12 +108,11 @@ class MessagePublishSubscribeBasicTests(unittest.TestCase):
 
     def publishMessagesWithoutPriority(self):
         """Publish numMessages messages to the test queue -"""
-        global LOCAL
         numMessages = 10
         startTime = time.time()
         logger.debug("Starting")
         try:
-            mp = MessagePublisher(local=LOCAL)
+            mp = MessagePublisher(local=self.LOCAL)
             #
             for ii in range(1, numMessages + 1):
                 message = "Test message %5d" % ii
@@ -145,7 +144,7 @@ class MessagePublishSubscribeBasicTests(unittest.TestCase):
 
 def suitePublishSubscribeRequest():
     suite = unittest.TestSuite()
-    suite.addTest(MessagePublishSubscribeBasicTests("testPublishSubscribe"))
+    suite.addTest(MessageSubscriberTests("testPublishSubscribe"))
     #
     return suite
 
@@ -157,5 +156,6 @@ if __name__ == "__main__":
     LOCAL = False
     if args.local:
         LOCAL = True
+    MessageSubscriberTests.LOCAL = LOCAL
     runner = unittest.TextTestRunner(failfast=True)
     runner.run(suitePublishSubscribeRequest())
