@@ -45,9 +45,9 @@ class MessagePublisher(object):
         self.__subscriber_routing_key = 'subscriber_routing_key'
 
     def publish(self, message, exchangeName, queueName, routingKey, priority=None):
-        # priority is either None or an integer between 0 and 10
+        # priority is either None or an integer between 1 and 10
         if priority and not re.match(r'^\d+$', str(priority)):
-            priority = 0
+            priority = 1
         return self.__publishMessage(message=message, exchangeName=exchangeName, queueName=queueName, routingKey=routingKey, priority=priority)
 
     def __publishMessage(self, message, exchangeName, queueName, routingKey, durableFlag=True, deliveryMode=2, priority=None):
@@ -106,9 +106,9 @@ class MessagePublisher(object):
     # direct exchange pattern having extensive reliance on exchanges, with no queue declare or queue bind from publisher
 
     def publishDirect(self, message, exchangeName, priority=None):
-        # priority is either None or an integer between 0 and 10
+        # priority is either None or an integer between 1 and 10
         if priority and not re.match(r'^\d+$', str(priority)):
-            priority = 0
+            priority = 1
         return self.__publishDirect(message=message, exchangeName=exchangeName, priority=priority)
 
     def __publishDirect(self, message, exchangeName, priority=None, durableFlag=True, deliveryMode=2):
