@@ -41,6 +41,7 @@ hence, a default key has been set so that the producer and consumer must only co
 the publishDirect method has been implemented in the MessagePublisher class for the purpose of publishing to a subscriber
 """
 
+
 class MessageSubscriberBase(object):
 
     def __init__(self, amqpUrl, local=False):

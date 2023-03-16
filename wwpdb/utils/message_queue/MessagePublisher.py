@@ -111,7 +111,7 @@ class MessagePublisher(object):
             priority = 1
         return self.__publishDirect(message=message, exchangeName=exchangeName, priority=priority)
 
-    def __publishDirect(self, message, exchangeName, priority=None, durableFlag=True, deliveryMode=2):
+    def __publishDirect(self, message, exchangeName, priority=None, deliveryMode=2):
         """publish the input message -"""
         startTime = time.time()
         logger.debug("Starting to publish message ")

@@ -42,7 +42,7 @@ class MessageConsumer(MessageConsumerBase):
 
 
 class MessageConsumerWorker(object):
-    def __init__(self,local=False):
+    def __init__(self, local=False):
         self.__local = local
         self.__setup()
 
@@ -99,6 +99,7 @@ class MyDetachedProcess(DetachedProcessBase):
             self.__mcw.suspend()
         except Exception as _e:  # noqa: F841
             pass
+
 
 if __name__ == "__main__":
     # adding a conservative permission mask for this
@@ -189,4 +190,3 @@ if __name__ == "__main__":
         sys.stdout.write(myDP.status())
     else:
         pass
-
