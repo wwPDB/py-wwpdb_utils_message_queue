@@ -41,7 +41,7 @@ logging.basicConfig(level=logging.INFO, format="\n[%(levelname)s]-%(module)s.%(f
 logger = logging.getLogger()
 
 
-# @unittest.skipUnless(Features().haveRbmqTestServer(), "require Rbmq Test Environment")
+@unittest.skipUnless(Features().haveRbmqTestServer(), "require Rbmq Test Environment")
 class MessagePublishConsumeBasicTests(unittest.TestCase):
     LOCAL = False
 

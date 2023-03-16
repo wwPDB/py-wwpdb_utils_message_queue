@@ -41,7 +41,7 @@ logging.basicConfig(level=logging.INFO, format="\n[%(levelname)s]-%(module)s.%(f
 logger = logging.getLogger()
 
 
-# @unittest.skipUnless(Features().haveRbmqTestServer(), "require Rbmq Test Environment")
+@unittest.skipUnless(Features().haveRbmqTestServer(), "require Rbmq Test Environment")
 class MessagePriorityTests(unittest.TestCase):
     LOCAL = False
 
@@ -91,7 +91,7 @@ class MessagePriorityTests(unittest.TestCase):
 
             channel.exchange_declare(exchange="test_priority_exchange", exchange_type="topic", durable=True, auto_delete=False)
 
-            result = channel.queue_declare(queue="test_priority_queue", durable=True, arguments={'x-max-priority':10})
+            result = channel.queue_declare(queue="test_priority_queue", durable=True, arguments={'x-max-priority': 10})
             channel.queue_bind(exchange="test_priority_exchange", queue=result.method.queue, routing_key="text_message")
 
             channel.basic_consume(on_message_callback=messageHandler, queue=result.method.queue, consumer_tag="test_consumer_tag")

@@ -53,7 +53,7 @@ logger = logging.getLogger()
 inmain = True if __name__ == "__main__" else False
 
 
-# @unittest.skipUnless(Features().haveRbmqTestServer() and inmain, "require Rbmq Test Environment and started from command line")
+@unittest.skipUnless(Features().haveRbmqTestServer() and inmain, "require Rbmq Test Environment and started from command line")
 class MessagePublisherBasicTests(unittest.TestCase):
     LOCAL = False
 

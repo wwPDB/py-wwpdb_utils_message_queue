@@ -49,7 +49,7 @@ logging.basicConfig(level=logging.WARN, format="\n[%(levelname)s]-%(module)s.%(f
 logger = logging.getLogger()
 
 
-# @unittest.skipUnless(Features().haveRbmqTestServer(), "require Rbmq Test Environment")
+@unittest.skipUnless(Features().haveRbmqTestServer(), "require Rbmq Test Environment")
 class MessageQueueConnectionTests(unittest.TestCase):
     LOCAL = False
 
@@ -94,6 +94,7 @@ class MessageQueueConnectionTests(unittest.TestCase):
         endTime = time.time()
         logger.debug("Completed (%f seconds)", (endTime - startTime))
 
+    @unittest.skip("Having issues with self signed SSL certificates on local host")
     def testPublishRequestAuthSSL(self):
         """Test case:  create SSL connection and publish a test message"""
         startTime = time.time()

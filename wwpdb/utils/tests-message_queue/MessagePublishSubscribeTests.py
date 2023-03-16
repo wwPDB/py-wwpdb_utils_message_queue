@@ -37,10 +37,17 @@ logging.basicConfig(level=logging.INFO, format="\n[%(levelname)s]-%(module)s.%(f
 logger = logging.getLogger()
 
 
-# @unittest.skipUnless(Features().haveRbmqTestServer(), "require Rbmq Test Environment")
+@unittest.skipUnless(Features().haveRbmqTestServer(), "require Rbmq Test Environment")
 class MessagePublishSubscribeBasicTests(unittest.TestCase):
     LOCAL = False
 
+    def setUp(self):
+        self.__exchange_name = 'test_subscriber_exchange'
+        self.__exchange_type = 'direct'
+        self.__routing_key = 'subscriber_routing_key'
+        self.__channel = None
+        self.__queue_name = None
+        
     def testPublishSubscribe(self):
         self.initialize()
         self.publishMessages()
@@ -48,9 +55,6 @@ class MessagePublishSubscribeBasicTests(unittest.TestCase):
 
     def initialize(self):
         """Test case:  publish single text message basic authentication"""
-        self.__exchange_name = 'test_subscriber_exchange'
-        self.__exchange_type = 'direct'
-        self.__routing_key = 'subscriber_routing_key'
 
         startTime = time.time()
         logger.debug("Starting")
@@ -67,7 +71,7 @@ class MessagePublishSubscribeBasicTests(unittest.TestCase):
 
             self.__channel.exchange_declare(exchange=self.__exchange_name, exchange_type=self.__exchange_type, durable=True, auto_delete=False)
 
-            result = self.__channel.queue_declare(queue='', exclusive=True, durable=True, arguments={'x-max-priority':10})
+            result = self.__channel.queue_declare(queue='', exclusive=True, durable=True, arguments={'x-max-priority': 10})
             self.__queue_name = result.method.queue
 
             self.__channel.queue_bind(exchange=self.__exchange_name, queue=self.__queue_name, routing_key=self.__routing_key)
@@ -116,6 +120,7 @@ class MessagePublishSubscribeBasicTests(unittest.TestCase):
 
         endTime = time.time()
         logger.debug("Completed (%f seconds)", (endTime - startTime))
+
 
 def messageHandler(channel, method, header, body):  # pylint: disable=unused-argument
     channel.basic_ack(delivery_tag=method.delivery_tag)

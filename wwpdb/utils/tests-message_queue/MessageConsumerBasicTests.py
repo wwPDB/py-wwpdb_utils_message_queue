@@ -67,7 +67,7 @@ def messageHandler(channel, method, header, body):  # pylint: disable=unused-arg
     return
 
 
-# @unittest.skipUnless(Features().haveRbmqTestServer() and inmain, "require Rbmq Test Environment and run from commandline")
+@unittest.skipUnless(Features().haveRbmqTestServer() and inmain, "require Rbmq Test Environment and run from commandline")
 class MessageConsumerBasicTests(unittest.TestCase):
     LOCAL = False
 

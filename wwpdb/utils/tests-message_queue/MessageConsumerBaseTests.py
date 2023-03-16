@@ -60,7 +60,7 @@ class MessageConsumer(MessageConsumerBase):
         return True
 
 
-# @unittest.skipUnless(Features().haveRbmqTestServer(), "require Rbmq Test Environment")
+@unittest.skipUnless(Features().haveRbmqTestServer(), "require Rbmq Test Environment")
 @unittest.skipUnless(inmain, "require running from main()")
 class MessageConsumerBaseTests(unittest.TestCase):
     LOCAL = False
