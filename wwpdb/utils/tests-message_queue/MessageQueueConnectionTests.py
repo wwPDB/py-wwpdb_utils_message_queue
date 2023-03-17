@@ -31,6 +31,7 @@ import pika
 import time
 import logging
 import argparse
+import sys
 
 #
 if __package__ is None or __package__ == "":
@@ -49,7 +50,7 @@ logging.basicConfig(level=logging.WARN, format="\n[%(levelname)s]-%(module)s.%(f
 logger = logging.getLogger()
 
 
-@unittest.skipUnless(Features().haveRbmqTestServer(), "require Rbmq Test Environment")
+@unittest.skipUnless((len(sys.argv) > 1 and sys.argv[1] == '--local') or Features().haveRbmqTestServer(), "require Rbmq Test Environment")
 class MessageQueueConnectionTests(unittest.TestCase):
     LOCAL = False
 
@@ -145,7 +146,7 @@ def suitePublishRequest():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument('-l', '--local', action='store_true', help='run on local host')
+    parser.add_argument('--local', action='store_true', help='run on local host')
     args = parser.parse_args()
     LOCAL = False
     if args.local:

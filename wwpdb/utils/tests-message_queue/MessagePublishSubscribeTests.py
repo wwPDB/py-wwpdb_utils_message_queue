@@ -22,6 +22,7 @@ import time
 import logging
 import pika
 import argparse
+import sys
 
 if __package__ is None or __package__ == "":
     import sys
@@ -37,7 +38,7 @@ logging.basicConfig(level=logging.INFO, format="\n[%(levelname)s]-%(module)s.%(f
 logger = logging.getLogger()
 
 
-@unittest.skipUnless(Features().haveRbmqTestServer(), "require Rbmq Test Environment")
+@unittest.skipUnless((len(sys.argv) > 1 and sys.argv[1] == '--local') or Features().haveRbmqTestServer(), "require Rbmq Test Environment")
 class MessagePublishSubscribeBasicTests(unittest.TestCase):
     LOCAL = False
 

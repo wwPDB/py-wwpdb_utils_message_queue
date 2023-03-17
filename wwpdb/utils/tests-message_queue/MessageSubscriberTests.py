@@ -19,8 +19,8 @@ __version__ = "V0.07"
 import unittest
 import time
 import logging
-import pika
 import argparse
+import sys
 
 if __package__ is None or __package__ == "":
     import sys
@@ -47,7 +47,7 @@ class MessageSubscriber(MessageSubscriberBase):
         return True
 
 
-# @unittest.skipUnless(Features().haveRbmqTestServer(), "require Rbmq Test Environment")
+@unittest.skipUnless((len(sys.argv) > 1 and sys.argv[1] == '--local') or Features().haveRbmqTestServer(), "require Rbmq Test Environment")
 class MessageSubscriberTests(unittest.TestCase):
     LOCAL = False
 

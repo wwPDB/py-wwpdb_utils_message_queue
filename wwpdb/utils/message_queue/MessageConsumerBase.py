@@ -256,10 +256,14 @@ class MessageConsumerBase(object):
 
         """
         logger.info("Declaring queue %s", queueName)
-        if self.__priority:
-            self._channel.queue_declare(callback=self.onQueueDeclareOk, queue=queueName, durable=True, arguments={'x-max-priority': 10})
-        else:
-            self._channel.queue_declare(callback=self.onQueueDeclareOk, queue=queueName, durable=True)
+        try:
+            if self.__priority:
+                self._channel.queue_declare(callback=self.onQueueDeclareOk, queue=queueName, durable=True, arguments={'x-max-priority': 10})
+            else:
+                self._channel.queue_declare(callback=self.onQueueDeclareOk, queue=queueName, durable=True)
+        except Exception as exc:
+            self._connection.close()
+            logger.warning('error - mixing of priority queues and non-priority queues')
 
     def onQueueDeclareOk(self, method_frame):  # pylint: disable=unused-argument
         """Method invoked on success of Queue.Declare call made when setupQueue has completed.
@@ -401,10 +405,16 @@ class MessageConsumerBase(object):
         self._connection = self.connect()
         self._channel = self._connection.channel()
         #
-        if self.__priority:
-            self._channel.queue_declare(queue=self.__queueName, durable=True, arguments={'x-max-priority': 10})
-        else:
-            self._channel.queue_declare(queue=self.__queueName, durable=True)
+        try:
+            if self.__priority:
+                self._channel.queue_declare(queue=self.__queueName, durable=True, arguments={'x-max-priority': 10})
+            else:
+                self._channel.queue_declare(queue=self.__queueName, durable=True)
+        except Exception:
+            self._connection.close()
+            logger.warning('error - mixing of priority queues and non-priority queues')
+            return
+
         self._channel.basic_qos(prefetch_count=1)
         self._channel.basic_consume(queue=self.__queueName, on_message_callback=self.onMessage)
         #

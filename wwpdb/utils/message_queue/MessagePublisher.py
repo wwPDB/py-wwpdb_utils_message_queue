@@ -66,10 +66,19 @@ class MessagePublisher(object):
             channel = connection.channel()
             channel.exchange_declare(exchange=exchangeName, exchange_type="topic", durable=True, auto_delete=False)
 
-            if priority:
-                result = channel.queue_declare(queue=queueName, durable=durableFlag, arguments={'x-max-priority': 10})
-            else:
-                result = channel.queue_declare(queue=queueName, durable=durableFlag)
+            try:
+                if priority:
+                    result = channel.queue_declare(queue=queueName, durable=durableFlag, arguments={'x-max-priority': 10})
+                else:
+                    result = channel.queue_declare(queue=queueName, durable=durableFlag)
+            except pika.exceptions.ChannelClosedByBroker as exc:
+                connection.close()
+                logger.warning('error - pre-existing queue is a priority queue but new queue is a regular queue')
+                raise Exception
+            except Exception as exc:
+                connection.close()
+                logger.warning('error - mixing of regular queues and priority queues')
+                raise Exception
 
             channel.queue_bind(exchange=exchangeName, queue=result.method.queue, routing_key=routingKey)
 
@@ -111,7 +120,7 @@ class MessagePublisher(object):
             priority = 1
         return self.__publishDirect(message=message, exchangeName=exchangeName, priority=priority)
 
-    def __publishDirect(self, message, exchangeName, priority=None, deliveryMode=2):
+    def __publishDirect(self, message, exchangeName, priority=None, durableFlag=True, deliveryMode=2):
         """publish the input message -"""
         startTime = time.time()
         logger.debug("Starting to publish message ")

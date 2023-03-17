@@ -41,7 +41,6 @@ hence, a default key has been set so that the producer and consumer must only co
 the publishDirect method has been implemented in the MessagePublisher class for the purpose of publishing to a subscriber
 """
 
-
 class MessageSubscriberBase(object):
 
     def __init__(self, amqpUrl, local=False):
@@ -56,7 +55,12 @@ class MessageSubscriberBase(object):
 
         self._connection = self.connect()
         self._channel = self._connection.channel()
-        result = self._channel.queue_declare(queue='', exclusive=True, durable=True, arguments={'x-max-priority': 10})
+        try:
+            result = self._channel.queue_declare(queue='', exclusive=True, durable=True, arguments={'x-max-priority': 10})
+        except:
+            self._connection.close()
+            logger.warning('error - mixing of priority queues and non-priority queues')
+            return
         self.__queue_name = result.method.queue
         self._channel.basic_qos(prefetch_count=1)
 
