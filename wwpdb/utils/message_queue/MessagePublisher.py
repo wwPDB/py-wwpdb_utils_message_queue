@@ -73,7 +73,7 @@ class MessagePublisher(object):
                     result = channel.queue_declare(queue=queueName, durable=durableFlag)
             except pika.exceptions.ChannelClosedByBroker as exc:
                 connection.close()
-                logger.warning('error - pre-existing queue is a priority queue but new queue is a regular queue')
+                logger.warning('error - priority type of pre-existing queue does not match new queue')
                 raise Exception
             except Exception as exc:
                 connection.close()
