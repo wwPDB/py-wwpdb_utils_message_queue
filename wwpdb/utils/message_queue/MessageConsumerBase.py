@@ -261,9 +261,9 @@ class MessageConsumerBase(object):
                 self._channel.queue_declare(callback=self.onQueueDeclareOk, queue=queueName, durable=True, arguments={'x-max-priority': 10})
             else:
                 self._channel.queue_declare(callback=self.onQueueDeclareOk, queue=queueName, durable=True)
-        except Exception as exc:
+        except Exception as _exc:  # noqa: F841
             self._connection.close()
-            logger.warning('error - mixing of priority queues and non-priority queues')
+            logger.critical('error - mixing of priority queues and non-priority queues')
 
     def onQueueDeclareOk(self, method_frame):  # pylint: disable=unused-argument
         """Method invoked on success of Queue.Declare call made when setupQueue has completed.

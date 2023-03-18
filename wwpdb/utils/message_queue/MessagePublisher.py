@@ -71,14 +71,14 @@ class MessagePublisher(object):
                     result = channel.queue_declare(queue=queueName, durable=durableFlag, arguments={'x-max-priority': 10})
                 else:
                     result = channel.queue_declare(queue=queueName, durable=durableFlag)
-            except pika.exceptions.ChannelClosedByBroker as exc:
+            except pika.exceptions.ChannelClosedByBroker as _exc:  # noqa: F841
                 connection.close()
-                logger.warning('error - priority type of pre-existing queue does not match new queue')
-                raise Exception
-            except Exception as exc:
+                logger.critical('error - priority type of pre-existing queue does not match new queue')
+                raise Exception  # pylint: disable=raise-missing-from,broad-exception-raised
+            except Exception as _exc:  # noqa: F841
                 connection.close()
-                logger.warning('error - mixing of regular queues and priority queues')
-                raise Exception
+                logger.critical('error - mixing of regular queues and priority queues')
+                raise Exception  # pylint: disable=raise-missing-from,broad-exception-raised
 
             channel.queue_bind(exchange=exchangeName, queue=result.method.queue, routing_key=routingKey)
 
@@ -120,7 +120,7 @@ class MessagePublisher(object):
             priority = 1
         return self.__publishDirect(message=message, exchangeName=exchangeName, priority=priority)
 
-    def __publishDirect(self, message, exchangeName, priority=None, durableFlag=True, deliveryMode=2):
+    def __publishDirect(self, message, exchangeName, priority=None, durableFlag=True, deliveryMode=2):  # pylint: disable=unused-argument
         """publish the input message -"""
         startTime = time.time()
         logger.debug("Starting to publish message ")
