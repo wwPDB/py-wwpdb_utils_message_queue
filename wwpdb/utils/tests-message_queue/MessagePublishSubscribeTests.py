@@ -25,7 +25,6 @@ import argparse
 import sys
 
 if __package__ is None or __package__ == "":
-    import sys
     from os import path
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 
@@ -48,7 +47,7 @@ class MessagePublishSubscribeBasicTests(unittest.TestCase):
         self.__routing_key = 'subscriber_routing_key'
         self.__channel = None
         self.__queue_name = None
-        
+
     def testPublishSubscribe(self):
         self.initialize()
         self.publishMessages()
