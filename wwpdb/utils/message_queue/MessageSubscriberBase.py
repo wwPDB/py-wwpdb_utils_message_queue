@@ -57,7 +57,7 @@ class MessageSubscriberBase(object):
         self._connection = self.connect()
         self._channel = self._connection.channel()
         try:
-            result = self._channel.queue_declare(queue='', exclusive=True, durable=True, arguments={'x-max-priority': 10})
+            result = self._channel.queue_declare(queue='', exclusive=True, durable=True)
         except:  # noqa: E722 pylint: disable=bare-except
             self._connection.close()
             logger.critical('error - mixing of priority queues and non-priority queues')

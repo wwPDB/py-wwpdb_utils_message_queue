@@ -412,7 +412,7 @@ class MessageConsumerBase(object):
                 self._channel.queue_declare(queue=self.__queueName, durable=True)
         except Exception:
             self._connection.close()
-            logger.warning('error - mixing of priority queues and non-priority queues')
+            logger.critical('error - mixing of priority queues and non-priority queues')
             return
 
         self._channel.basic_qos(prefetch_count=1)

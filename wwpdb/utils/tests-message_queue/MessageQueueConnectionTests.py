@@ -49,7 +49,7 @@ logging.basicConfig(level=logging.WARN, format="\n[%(levelname)s]-%(module)s.%(f
 logger = logging.getLogger()
 
 
-@unittest.skipUnless((len(sys.argv) > 1 and sys.argv[1] == '--local') or Features().haveRbmqTestServer(), "require Rbmq Test Environment")
+# @unittest.skipUnless((len(sys.argv) > 1 and sys.argv[1] == '--local') or Features().haveRbmqTestServer(), "require Rbmq Test Environment")
 class MessageQueueConnectionTests(unittest.TestCase):
     LOCAL = False
 

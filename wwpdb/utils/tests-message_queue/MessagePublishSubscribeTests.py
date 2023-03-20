@@ -71,7 +71,7 @@ class MessagePublishSubscribeBasicTests(unittest.TestCase):
 
             self.__channel.exchange_declare(exchange=self.__exchange_name, exchange_type=self.__exchange_type, durable=True, auto_delete=False)
 
-            result = self.__channel.queue_declare(queue='', exclusive=True, durable=True, arguments={'x-max-priority': 10})
+            result = self.__channel.queue_declare(queue='', exclusive=True, durable=True)
             self.__queue_name = result.method.queue
 
             self.__channel.queue_bind(exchange=self.__exchange_name, queue=self.__queue_name, routing_key=self.__routing_key)
@@ -93,10 +93,10 @@ class MessagePublishSubscribeBasicTests(unittest.TestCase):
             #
             for ii in range(1, numMessages + 1):
                 message = "Test message %5d" % ii
-                mp.publishDirect(message, exchangeName=self.__exchange_name, priority=ii)
+                mp.publishDirect(message, exchangeName=self.__exchange_name)
             #
             #  Send a quit message to shutdown an associated test consumer -
-            mp.publishDirect("quit", exchangeName=self.__exchange_name, priority=1)
+            mp.publishDirect("quit", exchangeName=self.__exchange_name)
         except Exception:
             logger.exception("Publish request failing")
             self.fail()

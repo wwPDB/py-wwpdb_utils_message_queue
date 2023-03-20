@@ -52,10 +52,7 @@ class MessageSubscriberTests(unittest.TestCase):
 
     def testPublishSubscribe(self):
         self.initialize()
-        # both with and without priority are working
-        self.publishMessagesWithPriority()
-        # not sure why not able to have another consume function here...doesn't reach next set of messages
-        self.publishMessagesWithoutPriority()
+        self.publishMessages()
         self.consumeMessages()
 
     def initialize(self):
@@ -84,7 +81,7 @@ class MessageSubscriberTests(unittest.TestCase):
         endTime = time.time()
         logger.debug("Completed (%f seconds)", (endTime - startTime))
 
-    def publishMessagesWithPriority(self):
+    def publishMessages(self):
         """Publish numMessages messages to the test queue -"""
         numMessages = 10
         startTime = time.time()
@@ -94,31 +91,10 @@ class MessageSubscriberTests(unittest.TestCase):
             #
             for ii in range(1, numMessages + 1):
                 message = "Test message %5d" % ii
-                mp.publishDirect(message, exchangeName=self.__exchange_name, priority=ii)
+                mp.publishDirect(message, exchangeName=self.__exchange_name)
             #
             #  Send a quit message to shutdown an associated test consumer -
-            mp.publishDirect("quit", exchangeName=self.__exchange_name, priority=1)
-        except Exception:
-            logger.exception("Publish request failing")
-            self.fail()
-
-        endTime = time.time()
-        logger.debug("Completed (%f seconds)", (endTime - startTime))
-
-    def publishMessagesWithoutPriority(self):
-        """Publish numMessages messages to the test queue -"""
-        numMessages = 10
-        startTime = time.time()
-        logger.debug("Starting")
-        try:
-            mp = MessagePublisher(local=self.LOCAL)
-            #
-            for ii in range(1, numMessages + 1):
-                message = "Test message %5d" % ii
-                mp.publishDirect(message, exchangeName=self.__exchange_name, priority=None)
-            #
-            #  Send a quit message to shutdown an associated test consumer -
-            mp.publishDirect("quit", exchangeName=self.__exchange_name, priority=None)
+            mp.publishDirect("quit", exchangeName=self.__exchange_name)
         except Exception:
             logger.exception("Publish request failing")
             self.fail()
