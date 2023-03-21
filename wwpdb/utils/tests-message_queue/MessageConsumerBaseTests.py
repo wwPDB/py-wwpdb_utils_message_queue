@@ -28,9 +28,10 @@ __version__ = "V0.07"
 import unittest
 import time
 import logging
+import argparse
+import sys
 
 if __package__ is None or __package__ == "":
-    import sys
     from os import path
 
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
@@ -52,24 +53,29 @@ logger = logging.getLogger()
 inmain = True if __name__ == "__main__" else False
 
 
-@unittest.skipUnless(Features().haveRbmqTestServer(), "require Rbmq Test Environment")
+@unittest.skipUnless((len(sys.argv) > 1 and sys.argv[1] == "--local") or Features().haveRbmqTestServer(), "require Rbmq Test Environment")
 class MessageConsumer(MessageConsumerBase):
     def workerMethod(self, msgBody, deliveryTag=None):
         logger.info("Message body %r", msgBody)
         return True
 
 
-@unittest.skipUnless(Features().haveRbmqTestServer(), "require Rbmq Test Environment")
+@unittest.skipUnless((len(sys.argv) > 1 and sys.argv[1] == "--local") or Features().haveRbmqTestServer(), "require Rbmq Test Environment")
 @unittest.skipUnless(inmain, "require running from main()")
 class MessageConsumerBaseTests(unittest.TestCase):
+    LOCAL = False
+
     def testMessageConsumer(self):
         """Test case:  run async consumer"""
         startTime = time.time()
         logger.info("Starting")
         try:
             mqc = MessageQueueConnection()
-            url = mqc._getSslConnectionUrl()  # pylint: disable=protected-access
-            mc = MessageConsumer(amqpUrl=url)
+            if self.LOCAL:
+                url = "localhost"
+            else:
+                url = mqc._getSslConnectionUrl()  # pylint: disable=protected-access
+            mc = MessageConsumer(amqpUrl=url, local=self.LOCAL)
             mc.setQueue(queueName="test_queue", routingKey="text_message")
             mc.setExchange(exchange="test_exchange", exchangeType="topic")
             try:
@@ -92,5 +98,12 @@ def suiteMessageConsumer():
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
+    parser.add_argument("--local", action="store_true", help="run on local host")
+    args = parser.parse_args()
+    LOCAL = False
+    if args.local:
+        LOCAL = True
+    MessageConsumerBaseTests.LOCAL = LOCAL
     runner = unittest.TextTestRunner(failfast=True)
     runner.run(suiteMessageConsumer())

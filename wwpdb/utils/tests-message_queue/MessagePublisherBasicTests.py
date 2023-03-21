@@ -29,9 +29,10 @@ __version__ = "V0.07"
 import unittest
 import time
 import logging
+import argparse
+import sys
 
 if __package__ is None or __package__ == "":
-    import sys
     from os import path
 
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
@@ -52,8 +53,10 @@ logger = logging.getLogger()
 inmain = True if __name__ == "__main__" else False
 
 
-@unittest.skipUnless(Features().haveRbmqTestServer() and inmain, "require Rbmq Test Environment and started from command line")
+@unittest.skipUnless((len(sys.argv) > 1 and sys.argv[1] == "--local") or Features().haveRbmqTestServer() and inmain, "require Rbmq Test Environment and started from command line")
 class MessagePublisherBasicTests(unittest.TestCase):
+    LOCAL = False
+
     def setUp(self):
         self.__numMessages = 50
 
@@ -62,7 +65,7 @@ class MessagePublisherBasicTests(unittest.TestCase):
         startTime = time.time()
         logger.debug("Starting")
         try:
-            mp = MessagePublisher()
+            mp = MessagePublisher(local=self.LOCAL)
             #
             for ii in range(1, self.__numMessages + 1):
                 message = "Test message %5d" % ii
@@ -86,5 +89,12 @@ def suitePublishRequest():
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
+    parser.add_argument("--local", action="store_true", help="run on local host")
+    args = parser.parse_args()
+    LOCAL = False
+    if args.local:
+        LOCAL = True
+    MessagePublisherBasicTests.LOCAL = LOCAL
     runner = unittest.TextTestRunner(failfast=True)
     runner.run(suitePublishRequest())
