@@ -1,6 +1,6 @@
 #
-# File: MessageConsumerBase.py
-# Date:  7-Sept-2016  J. Westbrook
+# File: MessageSubscriberBase.py
+# Date:  21-Mar-2023   J. Smith
 #
 # Updates:
 ##
@@ -14,8 +14,8 @@ Common Deposition and Annotation System Project
 from __future__ import division, absolute_import, print_function
 
 __docformat__ = "restructuredtext en"
-__author__ = "John Westbrook, James Smith"
-__email__ = "jwest@rcsb.rutgers.edu"
+__author__ = "James Smith"
+__email__ = "james_smithrcsb.org"
 __license__ = "Creative Commons Attribution 3.0 Unported"
 __version__ = "V0.07"
 
