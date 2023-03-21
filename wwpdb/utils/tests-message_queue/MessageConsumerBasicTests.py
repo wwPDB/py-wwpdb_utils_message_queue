@@ -29,9 +29,10 @@ import unittest
 import pika
 import time
 import logging
+import argparse
+import sys
 
 if __package__ is None or __package__ == "":
-    import sys
     from os import path
 
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
@@ -66,17 +67,22 @@ def messageHandler(channel, method, header, body):  # pylint: disable=unused-arg
     return
 
 
-@unittest.skipUnless(Features().haveRbmqTestServer() and inmain, "require Rbmq Test Environment and run from commandline")
+@unittest.skipUnless((len(sys.argv) > 1 and sys.argv[1] == "--local") or Features().haveRbmqTestServer() and inmain, "require Rbmq Test Environment and run from commandline")
 class MessageConsumerBasicTests(unittest.TestCase):
+    LOCAL = False
+
     def testConsumeBasic(self):
         """Test case:  publish single text message basic authentication"""
         startTime = time.time()
         logger.debug("Starting")
         try:
-            mqc = MessageQueueConnection()
-            parameters = mqc._getConnectionParameters()  # pylint: disable=protected-access
+            if self.LOCAL:
+                connection = pika.BlockingConnection(pika.ConnectionParameters("localhost"))
+            else:
+                mqc = MessageQueueConnection()
+                parameters = mqc._getConnectionParameters()  # pylint: disable=protected-access
+                connection = pika.BlockingConnection(parameters)
 
-            connection = pika.BlockingConnection(parameters)
             channel = connection.channel()
 
             channel.exchange_declare(exchange="test_exchange", exchange_type="topic", durable=True, auto_delete=False)
@@ -99,11 +105,13 @@ class MessageConsumerBasicTests(unittest.TestCase):
         startTime = time.time()
         logger.debug("Starting")
         try:
-            mqc = MessageQueueConnection()
-            url = mqc._getSslConnectionUrl()  # pylint: disable=protected-access
-            parameters = pika.URLParameters(url)
-
-            connection = pika.BlockingConnection(parameters)
+            if self.LOCAL:
+                connection = pika.BlockingConnection(pika.ConnectionParameters("localhost"))
+            else:
+                mqc = MessageQueueConnection()
+                url = mqc._getSslConnectionUrl()  # pylint: disable=protected-access
+                parameters = pika.URLParameters(url)
+                connection = pika.BlockingConnection(parameters)
 
             channel = connection.channel()
 
@@ -125,12 +133,19 @@ class MessageConsumerBasicTests(unittest.TestCase):
 
 def suiteConsumeRequest():
     suite = unittest.TestSuite()
-    # suite.addTest(MessageConsumerBasicTests('testConsumeBasic'))
-    suite.addTest(MessageConsumerBasicTests("testConsumeSSL"))
+    suite.addTest(MessageConsumerBasicTests("testConsumeBasic"))
+    # suite.addTest(MessageConsumerBasicTests("testConsumeSSL"))
     #
     return suite
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
+    parser.add_argument("--local", action="store_true", help="run on local host")
+    args = parser.parse_args()
+    LOCAL = False
+    if args.local:
+        LOCAL = True
+    MessageConsumerBasicTests.LOCAL = LOCAL
     runner = unittest.TextTestRunner(failfast=True)
     runner.run(suiteConsumeRequest())
