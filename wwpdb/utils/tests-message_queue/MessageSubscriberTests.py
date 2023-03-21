@@ -50,6 +50,11 @@ class MessageSubscriber(MessageSubscriberBase):
 class MessageSubscriberTests(unittest.TestCase):
     LOCAL = False
 
+    def setUp(self):
+        self.__exchange_name = None
+        self.__subscriber = None
+
+
     def testPublishSubscribe(self):
         self.initialize()
         self.publishMessages()
@@ -58,8 +63,6 @@ class MessageSubscriberTests(unittest.TestCase):
     def initialize(self):
         """Test case:  publish single text message basic authentication"""
         self.__exchange_name = 'test_subscriber_exchange'
-        self.__exchange_type = 'direct'
-        self.__routing_key = 'subscriber_routing_key'
 
         startTime = time.time()
         logger.debug("Starting")
@@ -69,7 +72,7 @@ class MessageSubscriberTests(unittest.TestCase):
                 url = None
             else:
                 mqc = MessageQueueConnection()
-                url = mqc._getDefaultConnectionUrl()
+                url = mqc._getDefaultConnectionUrl()  # pylint: disable=protected-access
 
             self.__subscriber = MessageSubscriber(url, local=self.LOCAL)
             self.__subscriber.add_exchange(self.__exchange_name)

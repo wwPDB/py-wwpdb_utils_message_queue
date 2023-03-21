@@ -90,7 +90,6 @@ class MessagePriorityTests(unittest.TestCase):
         endTime = time.time()
         logger.debug("Completed (%f seconds)", (endTime - startTime))
 
-
     def consumeMessages(self):
         """Test case:  publish single text message basic authentication"""
         startTime = time.time()

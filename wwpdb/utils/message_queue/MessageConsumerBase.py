@@ -312,7 +312,6 @@ class MessageConsumerBase(object):
         if self._channel:
             self._channel.close()
 
-
     def stopConsuming(self):
         """Tell RabbitMQ that you would like to stop consuming by sending the
         Basic.Cancel RPC command.
@@ -341,7 +340,6 @@ class MessageConsumerBase(object):
         """
         logger.info("Closing the channel")
         self._channel.close()
-
 
     def stop(self):
         """Cleanly shutdown the connection to RabbitMQ by stopping the consumer
