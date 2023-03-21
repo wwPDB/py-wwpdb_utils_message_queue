@@ -48,7 +48,7 @@ class MessageConsumerWorker(object):
 
     def __setup(self):
         if self.__local:
-            url = 'localhost'
+            url = "localhost"
         else:
             mqc = MessageQueueConnection()
             url = mqc._getSslConnectionUrl()  # pylint: disable=protected-access
@@ -116,7 +116,7 @@ if __name__ == "__main__":
     parser.add_option("--restart", default=False, action="store_true", dest="restartOp", help="Restart consumer client process")
     parser.add_option("--status", default=False, action="store_true", dest="statusOp", help="Report consumer client process status")
 
-    parser.add_option("--local", action="store_true", help='run on local machine')
+    parser.add_option("--local", action="store_true", help="run on local machine")
 
     # parser.add_option("-v", "--verbose", default=False, action="store_true", dest="verbose", help="Enable verbose output")
     parser.add_option("--debug", default=1, type="int", dest="debugLevel", help="Debug level (default=1) [0-3]")
@@ -128,7 +128,7 @@ if __name__ == "__main__":
         parentdir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
         topSessionPath = os.path.join(parentdir, "tests-message_queue", "test-output")
         if not os.path.exists(topSessionPath):
-            print('making path %s' % topSessionPath)
+            print("making path %s" % topSessionPath)
             os.makedirs(topSessionPath, exist_ok=True)
     else:
         siteId = getSiteId(defaultSiteId=None)
@@ -148,10 +148,10 @@ if __name__ == "__main__":
     #
     if not os.path.exists(wfLogFilePath):
         if not os.path.exists(os.path.dirname(wfLogFilePath)):
-            print('making path %s' % os.path.dirname(wfLogFilePath))
+            print("making path %s" % os.path.dirname(wfLogFilePath))
             os.makedirs(os.path.dirname(wfLogFilePath))
-        print('making file %s' % wfLogFilePath)
-        with open(wfLogFilePath, 'ab'):
+        print("making file %s" % wfLogFilePath)
+        with open(wfLogFilePath, "ab"):
             os.utime(wfLogFilePath, (time.time(), time.time()))
     #
     logger = logging.getLogger(name="root")  # pylint: disable=redefined-outer-name

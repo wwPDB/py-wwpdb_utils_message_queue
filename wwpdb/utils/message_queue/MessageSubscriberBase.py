@@ -43,24 +43,23 @@ the publishDirect method has been implemented in the MessagePublisher class for 
 
 
 class MessageSubscriberBase(object):
-
     def __init__(self, amqpUrl, local=False):
         self._url = amqpUrl
         self._closing = False
         self._consumerTag = None
         self.local = local
 
-        self.__exchange_type = 'direct'
-        self.__routing_key = 'subscriber_routing_key'
+        self.__exchange_type = "direct"
+        self.__routing_key = "subscriber_routing_key"
         self.__exchanges = []
 
         self._connection = self.connect()
         self._channel = self._connection.channel()
         try:
-            result = self._channel.queue_declare(queue='', exclusive=True, durable=True)
+            result = self._channel.queue_declare(queue="", exclusive=True, durable=True)
         except:  # noqa: E722 pylint: disable=bare-except
             self._connection.close()
-            logger.critical('error - mixing of priority queues and non-priority queues')
+            logger.critical("error - mixing of priority queues and non-priority queues")
             return
         self.__queue_name = result.method.queue
         self._channel.basic_qos(prefetch_count=1)
@@ -72,7 +71,7 @@ class MessageSubscriberBase(object):
 
     def run(self):
         if len(self.__exchanges) == 0:
-            logger.info('error - no exchanges')
+            logger.info("error - no exchanges")
             return
 
         self._channel.basic_consume(queue=self.__queue_name, on_message_callback=self.onMessage)
@@ -86,7 +85,7 @@ class MessageSubscriberBase(object):
         logger.info("Connecting to %s", self._url)
 
         if self.local:
-            return pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+            return pika.BlockingConnection(pika.ConnectionParameters("localhost"))
 
         return pika.BlockingConnection(
             pika.URLParameters(self._url),

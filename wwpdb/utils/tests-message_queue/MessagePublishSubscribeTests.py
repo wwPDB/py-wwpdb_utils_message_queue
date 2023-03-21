@@ -26,6 +26,7 @@ import sys
 
 if __package__ is None or __package__ == "":
     from os import path
+
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 
 from wwpdb.utils.message_queue.MessagePublisher import MessagePublisher
@@ -37,14 +38,14 @@ logging.basicConfig(level=logging.INFO, format="\n[%(levelname)s]-%(module)s.%(f
 logger = logging.getLogger()
 
 
-@unittest.skipUnless((len(sys.argv) > 1 and sys.argv[1] == '--local') or Features().haveRbmqTestServer(), "require Rbmq Test Environment")
+@unittest.skipUnless((len(sys.argv) > 1 and sys.argv[1] == "--local") or Features().haveRbmqTestServer(), "require Rbmq Test Environment")
 class MessagePublishSubscribeBasicTests(unittest.TestCase):
     LOCAL = False
 
     def setUp(self):
-        self.__exchange_name = 'test_subscriber_exchange'
-        self.__exchange_type = 'direct'
-        self.__routing_key = 'subscriber_routing_key'
+        self.__exchange_name = "test_subscriber_exchange"
+        self.__exchange_type = "direct"
+        self.__routing_key = "subscriber_routing_key"
         self.__channel = None
         self.__queue_name = None
 
@@ -61,7 +62,7 @@ class MessagePublishSubscribeBasicTests(unittest.TestCase):
 
         try:
             if self.LOCAL:
-                connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+                connection = pika.BlockingConnection(pika.ConnectionParameters("localhost"))
             else:
                 mqc = MessageQueueConnection()
                 parameters = mqc._getConnectionParameters()  # pylint: disable=protected-access
@@ -71,7 +72,7 @@ class MessagePublishSubscribeBasicTests(unittest.TestCase):
 
             self.__channel.exchange_declare(exchange=self.__exchange_name, exchange_type=self.__exchange_type, durable=True, auto_delete=False)
 
-            result = self.__channel.queue_declare(queue='', exclusive=True, durable=True)
+            result = self.__channel.queue_declare(queue="", exclusive=True, durable=True)
             self.__queue_name = result.method.queue
 
             self.__channel.queue_bind(exchange=self.__exchange_name, queue=self.__queue_name, routing_key=self.__routing_key)
@@ -109,7 +110,6 @@ class MessagePublishSubscribeBasicTests(unittest.TestCase):
         startTime = time.time()
         logger.debug("Starting")
         try:
-
             self.__channel.basic_consume(on_message_callback=messageHandler, queue=self.__queue_name, consumer_tag="test_consumer_tag")
 
             self.__channel.start_consuming()
@@ -145,7 +145,7 @@ def suitePublishSubscribeRequest():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument('--local', action='store_true', help='run on local host')
+    parser.add_argument("--local", action="store_true", help="run on local host")
     args = parser.parse_args()
     LOCAL = False
     if args.local:

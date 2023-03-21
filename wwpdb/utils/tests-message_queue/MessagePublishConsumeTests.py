@@ -41,7 +41,7 @@ logging.basicConfig(level=logging.INFO, format="\n[%(levelname)s]-%(module)s.%(f
 logger = logging.getLogger()
 
 
-@unittest.skipUnless((len(sys.argv) > 1 and sys.argv[1] == '--local') or Features().haveRbmqTestServer(), "require Rbmq Test Environment")
+@unittest.skipUnless((len(sys.argv) > 1 and sys.argv[1] == "--local") or Features().haveRbmqTestServer(), "require Rbmq Test Environment")
 class MessagePublishConsumeBasicTests(unittest.TestCase):
     LOCAL = False
 
@@ -76,7 +76,7 @@ class MessagePublishConsumeBasicTests(unittest.TestCase):
         logger.debug("Starting")
         try:
             if self.LOCAL:
-                connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+                connection = pika.BlockingConnection(pika.ConnectionParameters("localhost"))
             else:
                 mqc = MessageQueueConnection()
                 parameters = mqc._getConnectionParameters()  # pylint: disable=protected-access
@@ -124,7 +124,7 @@ def suitePublishConsumeRequest():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument('--local', action='store_true', help='run on local host')
+    parser.add_argument("--local", action="store_true", help="run on local host")
     args = parser.parse_args()
     LOCAL = False
     if args.local:

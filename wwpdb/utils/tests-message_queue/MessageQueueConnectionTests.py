@@ -49,7 +49,7 @@ logging.basicConfig(level=logging.WARN, format="\n[%(levelname)s]-%(module)s.%(f
 logger = logging.getLogger()
 
 
-@unittest.skipUnless((len(sys.argv) > 1 and sys.argv[1] == '--local') or Features().haveRbmqTestServer(), "require Rbmq Test Environment")
+@unittest.skipUnless((len(sys.argv) > 1 and sys.argv[1] == "--local") or Features().haveRbmqTestServer(), "require Rbmq Test Environment")
 class MessageQueueConnectionTests(unittest.TestCase):
     LOCAL = False
 
@@ -60,7 +60,7 @@ class MessageQueueConnectionTests(unittest.TestCase):
 
         try:
             if self.LOCAL:
-                connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+                connection = pika.BlockingConnection(pika.ConnectionParameters("localhost"))
             else:
                 mqc = MessageQueueConnection()
                 parameters = mqc._getConnectionParameters()  # pylint: disable=protected-access
@@ -101,7 +101,7 @@ class MessageQueueConnectionTests(unittest.TestCase):
         logger.debug("Starting")
         try:
             if self.LOCAL:
-                connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+                connection = pika.BlockingConnection(pika.ConnectionParameters("localhost"))
             else:
                 mqc = MessageQueueConnection()
                 parameters = mqc._getSslConnectionParameters()  # pylint: disable=protected-access
@@ -145,7 +145,7 @@ def suitePublishRequest():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument('--local', action='store_true', help='run on local host')
+    parser.add_argument("--local", action="store_true", help="run on local host")
     args = parser.parse_args()
     LOCAL = False
     if args.local:

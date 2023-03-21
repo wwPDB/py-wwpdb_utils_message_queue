@@ -38,15 +38,14 @@ logger = logging.getLogger()
 
 
 class MessagePublisher(object):
-
     def __init__(self, local=False):
         self.__local = local
-        self.__subscriber_exchange_type = 'direct'
-        self.__subscriber_routing_key = 'subscriber_routing_key'
+        self.__subscriber_exchange_type = "direct"
+        self.__subscriber_routing_key = "subscriber_routing_key"
 
     def publish(self, message, exchangeName, queueName, routingKey, priority=None):
         # priority is either None or an integer between 1 and 10
-        if priority and not re.match(r'^\d+$', str(priority)):
+        if priority and not re.match(r"^\d+$", str(priority)):
             priority = 1
         return self.__publishMessage(message=message, exchangeName=exchangeName, queueName=queueName, routingKey=routingKey, priority=priority)
 
@@ -57,7 +56,7 @@ class MessagePublisher(object):
         ok = False
         try:
             if self.__local:
-                connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+                connection = pika.BlockingConnection(pika.ConnectionParameters("localhost"))
             else:
                 mqc = MessageQueueConnection()
                 parameters = mqc._getDefaultConnectionParameters()  # pylint: disable=protected-access
@@ -68,16 +67,16 @@ class MessagePublisher(object):
 
             try:
                 if priority:
-                    result = channel.queue_declare(queue=queueName, durable=durableFlag, arguments={'x-max-priority': 10})
+                    result = channel.queue_declare(queue=queueName, durable=durableFlag, arguments={"x-max-priority": 10})
                 else:
                     result = channel.queue_declare(queue=queueName, durable=durableFlag)
             except pika.exceptions.ChannelClosedByBroker as _exc:  # noqa: F841
                 connection.close()
-                logger.critical('error - priority type of pre-existing queue does not match new queue')
+                logger.critical("error - priority type of pre-existing queue does not match new queue")
                 raise pika.exceptions.ChannelClosedByBroker  # pylint: disable=raise-missing-from,broad-exception-raised
             except Exception as _exc:  # noqa: F841
                 connection.close()
-                logger.critical('error - mixing of regular queues and priority queues')
+                logger.critical("error - mixing of regular queues and priority queues")
                 raise Exception  # pylint: disable=raise-missing-from,broad-exception-raised
 
             channel.queue_bind(exchange=exchangeName, queue=result.method.queue, routing_key=routingKey)
@@ -88,10 +87,7 @@ class MessagePublisher(object):
                     exchange=exchangeName,
                     routing_key=routingKey,
                     body=message,
-                    properties=pika.BasicProperties(
-                        delivery_mode=deliveryMode,  # set message persistence
-                        priority=priority
-                    ),
+                    properties=pika.BasicProperties(delivery_mode=deliveryMode, priority=priority),  # set message persistence
                 )
             else:
                 channel.basic_publish(
@@ -124,7 +120,7 @@ class MessagePublisher(object):
         ok = False
         try:
             if self.__local:
-                connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+                connection = pika.BlockingConnection(pika.ConnectionParameters("localhost"))
             else:
                 mqc = MessageQueueConnection()
                 parameters = mqc._getDefaultConnectionParameters()  # pylint: disable=protected-access

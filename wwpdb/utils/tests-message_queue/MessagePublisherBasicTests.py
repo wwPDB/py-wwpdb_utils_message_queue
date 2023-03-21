@@ -53,7 +53,7 @@ logger = logging.getLogger()
 inmain = True if __name__ == "__main__" else False
 
 
-@unittest.skipUnless((len(sys.argv) > 1 and sys.argv[1] == '--local') or Features().haveRbmqTestServer() and inmain, "require Rbmq Test Environment and started from command line")
+@unittest.skipUnless((len(sys.argv) > 1 and sys.argv[1] == "--local") or Features().haveRbmqTestServer() and inmain, "require Rbmq Test Environment and started from command line")
 class MessagePublisherBasicTests(unittest.TestCase):
     LOCAL = False
 
@@ -90,7 +90,7 @@ def suitePublishRequest():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument('--local', action='store_true', help='run on local host')
+    parser.add_argument("--local", action="store_true", help="run on local host")
     args = parser.parse_args()
     LOCAL = False
     if args.local:

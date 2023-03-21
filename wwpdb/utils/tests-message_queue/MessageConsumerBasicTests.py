@@ -67,7 +67,7 @@ def messageHandler(channel, method, header, body):  # pylint: disable=unused-arg
     return
 
 
-@unittest.skipUnless((len(sys.argv) > 1 and sys.argv[1] == '--local') or Features().haveRbmqTestServer() and inmain, "require Rbmq Test Environment and run from commandline")
+@unittest.skipUnless((len(sys.argv) > 1 and sys.argv[1] == "--local") or Features().haveRbmqTestServer() and inmain, "require Rbmq Test Environment and run from commandline")
 class MessageConsumerBasicTests(unittest.TestCase):
     LOCAL = False
 
@@ -77,7 +77,7 @@ class MessageConsumerBasicTests(unittest.TestCase):
         logger.debug("Starting")
         try:
             if self.LOCAL:
-                connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+                connection = pika.BlockingConnection(pika.ConnectionParameters("localhost"))
             else:
                 mqc = MessageQueueConnection()
                 parameters = mqc._getConnectionParameters()  # pylint: disable=protected-access
@@ -106,7 +106,7 @@ class MessageConsumerBasicTests(unittest.TestCase):
         logger.debug("Starting")
         try:
             if self.LOCAL:
-                connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+                connection = pika.BlockingConnection(pika.ConnectionParameters("localhost"))
             else:
                 mqc = MessageQueueConnection()
                 url = mqc._getSslConnectionUrl()  # pylint: disable=protected-access
@@ -133,7 +133,7 @@ class MessageConsumerBasicTests(unittest.TestCase):
 
 def suiteConsumeRequest():
     suite = unittest.TestSuite()
-    suite.addTest(MessageConsumerBasicTests('testConsumeBasic'))
+    suite.addTest(MessageConsumerBasicTests("testConsumeBasic"))
     # suite.addTest(MessageConsumerBasicTests("testConsumeSSL"))
     #
     return suite
@@ -141,7 +141,7 @@ def suiteConsumeRequest():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument('--local', action='store_true', help='run on local host')
+    parser.add_argument("--local", action="store_true", help="run on local host")
     args = parser.parse_args()
     LOCAL = False
     if args.local:

@@ -41,7 +41,7 @@ logging.basicConfig(level=logging.INFO, format="\n[%(levelname)s]-%(module)s.%(f
 logger = logging.getLogger()
 
 
-@unittest.skipUnless((len(sys.argv) > 1 and sys.argv[1] == '--local') or Features().haveRbmqTestServer(), "require Rbmq Test Environment")
+@unittest.skipUnless((len(sys.argv) > 1 and sys.argv[1] == "--local") or Features().haveRbmqTestServer(), "require Rbmq Test Environment")
 class MessagePriorityTests(unittest.TestCase):
     LOCAL = False
     exchangeName = "test_priority_exchange"
@@ -52,7 +52,7 @@ class MessagePriorityTests(unittest.TestCase):
 
     def setup(self):
         if self.LOCAL:
-            connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+            connection = pika.BlockingConnection(pika.ConnectionParameters("localhost"))
         else:
             mqc = MessageQueueConnection()
             parameters = mqc._getDefaultConnectionParameters()  # pylint: disable=protected-access
@@ -97,7 +97,7 @@ class MessagePriorityTests(unittest.TestCase):
 
         try:
             if self.LOCAL:
-                connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+                connection = pika.BlockingConnection(pika.ConnectionParameters("localhost"))
             else:
                 mqc = MessageQueueConnection()
                 parameters = mqc._getConnectionParameters()  # pylint: disable=protected-access
@@ -107,7 +107,7 @@ class MessagePriorityTests(unittest.TestCase):
 
             channel.exchange_declare(exchange=self.exchangeName, exchange_type=self.exchangeType, durable=True, auto_delete=False)
 
-            result = channel.queue_declare(queue=self.queueName, durable=True, arguments={'x-max-priority': 10})
+            result = channel.queue_declare(queue=self.queueName, durable=True, arguments={"x-max-priority": 10})
             channel.queue_bind(exchange=self.exchangeName, queue=result.method.queue, routing_key=self.routingKey)
 
             channel.basic_consume(on_message_callback=messageHandler, queue=result.method.queue, consumer_tag=self.consumerTag)
@@ -145,7 +145,7 @@ def suitePublishConsumeRequest():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument('--local', action='store_true', help='run on local host')
+    parser.add_argument("--local", action="store_true", help="run on local host")
     args = parser.parse_args()
     LOCAL = False
     if args.local:

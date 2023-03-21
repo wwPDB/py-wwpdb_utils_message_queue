@@ -95,7 +95,7 @@ class MessageConsumerBase(object):
         #                              stop_ioloop_on_close=False)
 
         if self.__local:
-            return pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+            return pika.BlockingConnection(pika.ConnectionParameters("localhost"))
 
         return pika.BlockingConnection(
             pika.URLParameters(self._url),
@@ -114,12 +114,12 @@ class MessageConsumerBase(object):
         #
         try:
             if self.__priority:
-                self._channel.queue_declare(queue=self.__queueName, durable=True, arguments={'x-max-priority': 10})
+                self._channel.queue_declare(queue=self.__queueName, durable=True, arguments={"x-max-priority": 10})
             else:
                 self._channel.queue_declare(queue=self.__queueName, durable=True)
         except Exception:
             self._connection.close()
-            logger.critical('error - mixing of priority queues and non-priority queues')
+            logger.critical("error - mixing of priority queues and non-priority queues")
             return
 
         self._channel.basic_qos(prefetch_count=1)
@@ -222,12 +222,12 @@ class MessageConsumerBase(object):
         logger.info("Declaring queue %s", queueName)
         try:
             if self.__priority:
-                self._channel.queue_declare(callback=self.onQueueDeclareOk, queue=queueName, durable=True, arguments={'x-max-priority': 10})
+                self._channel.queue_declare(callback=self.onQueueDeclareOk, queue=queueName, durable=True, arguments={"x-max-priority": 10})
             else:
                 self._channel.queue_declare(callback=self.onQueueDeclareOk, queue=queueName, durable=True)
         except Exception as _exc:  # noqa: F841
             self._connection.close()
-            logger.critical('error - mixing of priority queues and non-priority queues')
+            logger.critical("error - mixing of priority queues and non-priority queues")
 
     def onQueueDeclareOk(self, method_frame):  # pylint: disable=unused-argument
         """Method invoked on success of Queue.Declare call made when setupQueue has completed.
@@ -371,9 +371,8 @@ class MessageConsumerBase(object):
         logger.info("Closing connection")
         self._connection.close()
 
-
-#
-# Blocking connection does not have callbacks
+    #
+    # Blocking connection does not have callbacks
     # def onConnectionOpen(self, unusedConnection):  # pylint: disable=unused-argument
     #     """Callback method on successful connection to RabbitMQ server.
 
