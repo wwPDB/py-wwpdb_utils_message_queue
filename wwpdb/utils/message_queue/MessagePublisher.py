@@ -30,6 +30,7 @@ import pika
 import time
 import logging
 import re
+import sys
 
 #
 from wwpdb.utils.message_queue.MessageQueueConnection import MessageQueueConnection
@@ -70,10 +71,13 @@ class MessagePublisher(object):
                     result = channel.queue_declare(queue=queueName, durable=durableFlag, arguments={"x-max-priority": 10})
                 else:
                     result = channel.queue_declare(queue=queueName, durable=durableFlag)
-            except pika.exceptions.ChannelClosedByBroker as _exc:  # noqa: F841
+            except pika.exceptions.ChannelClosedByBroker as exc:
                 connection.close()
                 logger.critical("error - priority type of pre-existing queue does not match new queue")
-                raise pika.exceptions.ChannelClosedByBroker  # pylint: disable=raise-missing-from,broad-exception-raised
+                if sys.version_info[0] == 2:
+                    raise pika.exceptions.ChannelClosedByBroker(exc.reply_code, exc.reply_text)  # pylint: disable=raise-missing-from,broad-exception-raised
+                else:
+                    raise pika.exceptions.ChannelClosedByBroker(exc.reply_code, exc.reply_text) from exc # pylint: disable=broad-exception-raised
             except Exception as _exc:  # noqa: F841
                 connection.close()
                 logger.critical("error - mixing of regular queues and priority queues")
