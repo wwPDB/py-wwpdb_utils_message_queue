@@ -77,7 +77,7 @@ class MessagePublisher(object):
                 if sys.version_info[0] == 2:
                     raise pika.exceptions.ChannelClosedByBroker(exc.reply_code, exc.reply_text)  # pylint: disable=raise-missing-from,broad-exception-raised
                 else:
-                    raise pika.exceptions.ChannelClosedByBroker(exc.reply_code, exc.reply_text) from exc # pylint: disable=broad-exception-raised
+                    raise pika.exceptions.ChannelClosedByBroker(exc.reply_code, exc.reply_text) from exc
             except Exception as _exc:  # noqa: F841
                 connection.close()
                 logger.critical("error - mixing of regular queues and priority queues")

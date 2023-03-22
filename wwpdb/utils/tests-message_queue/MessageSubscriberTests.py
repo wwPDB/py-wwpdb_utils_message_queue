@@ -30,6 +30,7 @@ if __package__ is None or __package__ == "":
 from wwpdb.utils.message_queue.MessagePublisher import MessagePublisher
 from wwpdb.utils.message_queue.MessageQueueConnection import MessageQueueConnection
 from wwpdb.utils.message_queue.MessageSubscriberBase import MessageSubscriberBase
+
 # from wwpdb.utils.testing.Features import Features
 
 #
