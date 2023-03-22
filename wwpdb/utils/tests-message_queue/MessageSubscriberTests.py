@@ -30,7 +30,7 @@ if __package__ is None or __package__ == "":
 from wwpdb.utils.message_queue.MessagePublisher import MessagePublisher
 from wwpdb.utils.message_queue.MessageQueueConnection import MessageQueueConnection
 from wwpdb.utils.message_queue.MessageSubscriberBase import MessageSubscriberBase
-from wwpdb.utils.testing.Features import Features
+# from wwpdb.utils.testing.Features import Features
 
 #
 logging.basicConfig(level=logging.INFO, format="\n[%(levelname)s]-%(module)s.%(funcName)s: %(message)s")
@@ -46,7 +46,9 @@ class MessageSubscriber(MessageSubscriberBase):
         return True
 
 
-@unittest.skipUnless((len(sys.argv) > 1 and sys.argv[1] == "--local") or Features().haveRbmqTestServer(), "require Rbmq Test Environment")
+# Disable tests from Azure until this can run standalone
+# @unittest.skipUnless((len(sys.argv) > 1 and sys.argv[1] == "--local") or Features().haveRbmqTestServer(), "require Rbmq Test Environment")
+@unittest.skipUnless((len(sys.argv) > 1 and sys.argv[1] == "--local"), "require Rbmq Test Environment")
 class MessageSubscriberTests(unittest.TestCase):
     LOCAL = False
 
