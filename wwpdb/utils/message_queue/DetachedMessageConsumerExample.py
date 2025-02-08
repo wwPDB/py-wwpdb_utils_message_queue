@@ -12,19 +12,17 @@
 #
 ##
 
-import sys
+import logging
 import os
 import platform
+import sys
 import time
-import logging
 from optparse import OptionParser  # pylint: disable=deprecated-module
 
+from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
 from wwpdb.utils.detach.DetachedProcessBase import DetachedProcessBase
 from wwpdb.utils.message_queue.MessageConsumerBase import MessageConsumerBase
-
-#
 from wwpdb.utils.message_queue.MessageQueueConnection import MessageQueueConnection
-from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
 
 logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s]-%(module)s.%(funcName)s: %(message)s")
@@ -36,12 +34,12 @@ class MessageConsumer(MessageConsumerBase):
     # def __init__(self, amqpUrl):
     #     super(MessageConsumer, self).__init__(amqpUrl)
 
-    def workerMethod(self, msgBody, deliveryTag=None):
+    def workerMethod(self, msgBody, deliveryTag=None):  # noqa: ARG002,PLR6301
         logger.info("Message body %r", msgBody)
         return True
 
 
-class MessageConsumerWorker(object):
+class MessageConsumerWorker:
     def __init__(self, local=False):
         self.__local = local
         self.__setup()
@@ -51,11 +49,10 @@ class MessageConsumerWorker(object):
             url = "localhost"
         else:
             mqc = MessageQueueConnection()
-            url = mqc._getSslConnectionUrl()  # pylint: disable=protected-access
+            url = mqc._getSslConnectionUrl()  # noqa: SLF001 pylint: disable=protected-access
         self.__mc = MessageConsumer(amqpUrl=url, local=self.__local)
         self.__mc.setQueue(queueName="test_queue", routingKey="text_message")
         self.__mc.setExchange(exchange="test_exchange", exchangeType="topic")
-        #
 
     def run(self):
         """Run async consumer"""
@@ -84,7 +81,7 @@ class MyDetachedProcess(DetachedProcessBase):
     Illustrates the use of python logging and various I/O channels in detached process.
     """
 
-    def __init__(self, pidFile="/tmp/DetachedProcessBase.pid", stdin=os.devnull, stdout=os.devnull, stderr=os.devnull, wrkDir="/", gid=None, uid=None, local=False):
+    def __init__(self, pidFile="/tmp/DetachedProcessBase.pid", stdin=os.devnull, stdout=os.devnull, stderr=os.devnull, wrkDir="/", gid=None, uid=None, local=False):  # noqa: S107,S108
         super(MyDetachedProcess, self).__init__(pidFile=pidFile, stdin=stdin, stdout=stdout, stderr=stderr, wrkDir=wrkDir, gid=gid, uid=uid)
         self.__local = local
         self.__mcw = MessageConsumerWorker(local=self.__local)
@@ -95,9 +92,9 @@ class MyDetachedProcess(DetachedProcessBase):
 
     def suspend(self):
         logger.info("SUSPENDING detached process")
-        try:
+        try:  # noqa: SIM105
             self.__mcw.suspend()
-        except Exception as _e:  # noqa: F841
+        except Exception as _e:  # noqa: F841,BLE001
             pass
 
 
@@ -121,56 +118,46 @@ if __name__ == "__main__":
     # parser.add_option("-v", "--verbose", default=False, action="store_true", dest="verbose", help="Enable verbose output")
     parser.add_option("--debug", default=1, type="int", dest="debugLevel", help="Debug level (default=1) [0-3]")
     parser.add_option("--instance", default=1, type="int", dest="instanceNo", help="Instance number [1-n]")
-    #
     (options, _args) = parser.parse_args()
-    #
     if options.local:
         parentdir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
         topSessionPath = os.path.join(parentdir, "tests-message_queue", "test-output")
         if not os.path.exists(topSessionPath):
-            print("making path %s" % topSessionPath)
+            print("making path %s" % topSessionPath)  # noqa: T201
             os.makedirs(topSessionPath, exist_ok=True)
     else:
         siteId = getSiteId(defaultSiteId=None)
         cI = ConfigInfo(siteId)
         #    topPath = cI.get('SITE_WEB_APPS_TOP_PATH')
         topSessionPath = cI.get("SITE_WEB_APPS_TOP_SESSIONS_PATH")
-    #
     myFullHostName = platform.uname()[1]
     myHostName = str(myFullHostName.split(".")[0]).lower()
-    #
     wsLogDirPath = os.path.join(topSessionPath, "ws-logs")
 
     pidFilePath = os.path.join(wsLogDirPath, myHostName + "_" + str(options.instanceNo) + ".pid")
     stdoutFilePath = os.path.join(wsLogDirPath, myHostName + "_" + str(options.instanceNo) + "_stdout.log")
     stderrFilePath = os.path.join(wsLogDirPath, myHostName + "_" + str(options.instanceNo) + "_stderr.log")
     wfLogFilePath = os.path.join(wsLogDirPath, myHostName + "_" + str(options.instanceNo) + "_" + now + ".log")
-    #
     if not os.path.exists(wfLogFilePath):
         if not os.path.exists(os.path.dirname(wfLogFilePath)):
-            print("making path %s" % os.path.dirname(wfLogFilePath))
+            print("making path %s" % os.path.dirname(wfLogFilePath))  # noqa: T201
             os.makedirs(os.path.dirname(wfLogFilePath))
-        print("making file %s" % wfLogFilePath)
+        print("making file %s" % wfLogFilePath)  # noqa: T201
         with open(wfLogFilePath, "ab"):
             os.utime(wfLogFilePath, (time.time(), time.time()))
-    #
     logger = logging.getLogger(name="root")  # pylint: disable=redefined-outer-name
     logging.captureWarnings(True)
     formatter = logging.Formatter("%(asctime)s [%(levelname)s]-%(module)s.%(funcName)s: %(message)s")
     handler = logging.FileHandler(wfLogFilePath)
     handler.setFormatter(formatter)
     logger.addHandler(handler)
-    #
     lt = time.strftime("%Y %m %d %H:%M:%S", time.localtime())
-    #
     if options.debugLevel > 2:
         logger.setLevel(logging.DEBUG)
     elif options.debugLevel > 0:
         logger.setLevel(logging.INFO)
     else:
         logger.setLevel(logging.ERROR)
-    #
-    #
     myDP = MyDetachedProcess(pidFile=pidFilePath, stdout=stdoutFilePath, stderr=stderrFilePath, wrkDir=wsLogDirPath, local=options.local)
 
     if options.startOp:

@@ -17,7 +17,6 @@ This software is provided under a Creative Commons Attribution 3.0 Unported
 License described at http://creativecommons.org/licenses/by/3.0/.
 
 """
-from __future__ import division, absolute_import, print_function
 
 __docformat__ = "restructuredtext en"
 __author__ = "John Westbrook"
@@ -26,11 +25,11 @@ __license__ = "Creative Commons Attribution 3.0 Unported"
 __version__ = "V0.07"
 
 
-import unittest
-import time
-import logging
 import argparse
+import logging
 import sys
+import time
+import unittest
 
 if __package__ is None or __package__ == "":
     from os import path
@@ -43,17 +42,15 @@ else:
 from wwpdb.utils.message_queue.MessagePublisher import MessagePublisher
 from wwpdb.utils.testing.Features import Features
 
-#
-
 logging.basicConfig(level=logging.INFO, format="\n[%(levelname)s]-%(module)s.%(funcName)s: %(message)s")
 logger = logging.getLogger()
 
 
 # This test could be run from main - it will load up a queue
-inmain = True if __name__ == "__main__" else False
+inmain = True if __name__ == "__main__" else False  # noqa: SIM210
 
 
-@unittest.skipUnless((len(sys.argv) > 1 and sys.argv[1] == "--local") or Features().haveRbmqTestServer() and inmain, "require Rbmq Test Environment and started from command line")
+@unittest.skipUnless((len(sys.argv) > 1 and sys.argv[1] == "--local") or (Features().haveRbmqTestServer() and inmain), "require Rbmq Test Environment and started from command line")
 class MessagePublisherBasicTests(unittest.TestCase):
     LOCAL = False
 
@@ -66,7 +63,6 @@ class MessagePublisherBasicTests(unittest.TestCase):
         logger.debug("Starting")
         try:
             mp = MessagePublisher(local=self.LOCAL)
-            #
             for ii in range(1, self.__numMessages + 1):
                 message = "Test message %5d" % ii
                 mp.publish(message, exchangeName="test_exchange", queueName="test_queue", routingKey="text_message")
@@ -84,7 +80,6 @@ class MessagePublisherBasicTests(unittest.TestCase):
 def suitePublishRequest():
     suite = unittest.TestSuite()
     suite.addTest(MessagePublisherBasicTests("testPublishMessages"))
-    #
     return suite
 
 

@@ -17,12 +17,13 @@ __license__ = "Creative Commons Attribution 3.0 Unported"
 __version__ = "V0.07"
 
 
-import unittest
-import time
-import logging
-import pika
 import argparse
+import logging
 import sys
+import time
+import unittest
+
+import pika
 
 if __package__ is None or __package__ == "":
     from os import path
@@ -33,7 +34,6 @@ from wwpdb.utils.message_queue.MessagePublisher import MessagePublisher
 from wwpdb.utils.message_queue.MessageQueueConnection import MessageQueueConnection
 from wwpdb.utils.testing.Features import Features
 
-#
 logging.basicConfig(level=logging.INFO, format="\n[%(levelname)s]-%(module)s.%(funcName)s: %(message)s")
 logger = logging.getLogger()
 
@@ -91,7 +91,6 @@ class MessagePublishSubscribeBasicTests(unittest.TestCase):
         logger.debug("Starting")
         try:
             mp = MessagePublisher(local=self.LOCAL)
-            #
             for ii in range(1, numMessages + 1):
                 message = "Test message %5d" % ii
                 mp.publishDirect(message, exchangeName=self.__exchange_name)
@@ -132,14 +131,11 @@ def messageHandler(channel, method, header, body):  # pylint: disable=unused-arg
     else:
         logger.info("Message body %r", body)
         time.sleep(0.25)
-    #
-    return
 
 
 def suitePublishSubscribeRequest():
     suite = unittest.TestSuite()
     suite.addTest(MessagePublishSubscribeBasicTests("testPublishSubscribe"))
-    #
     return suite
 
 

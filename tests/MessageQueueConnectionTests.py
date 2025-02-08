@@ -17,7 +17,6 @@ This software is provided under a Creative Commons Attribution 3.0 Unported
 License described at http://creativecommons.org/licenses/by/3.0/.
 
 """
-from __future__ import division, absolute_import, print_function
 
 __docformat__ = "restructuredtext en"
 __author__ = "John Westbrook"
@@ -26,14 +25,14 @@ __license__ = "Creative Commons Attribution 3.0 Unported"
 __version__ = "V0.07"
 
 
-import unittest
-import pika
-import time
-import logging
 import argparse
+import logging
 import sys
+import time
+import unittest
 
-#
+import pika
+
 if __package__ is None or __package__ == "":
     from os import path
 
@@ -41,11 +40,10 @@ if __package__ is None or __package__ == "":
     from commonsetup import TESTOUTPUT  # pylint: disable=unused-import,import-error
 else:
     from .commonsetup import TESTOUTPUT  # noqa: F401
-#
 from wwpdb.utils.message_queue.MessageQueueConnection import MessageQueueConnection
 from wwpdb.utils.testing.Features import Features
 
-logging.basicConfig(level=logging.WARN, format="\n[%(levelname)s]-%(module)s.%(funcName)s: %(message)s")
+logging.basicConfig(level=logging.WARNING, format="\n[%(levelname)s]-%(module)s.%(funcName)s: %(message)s")
 logger = logging.getLogger()
 
 
@@ -63,7 +61,7 @@ class MessageQueueConnectionTests(unittest.TestCase):
                 connection = pika.BlockingConnection(pika.ConnectionParameters("localhost"))
             else:
                 mqc = MessageQueueConnection()
-                parameters = mqc._getConnectionParameters()  # pylint: disable=protected-access
+                parameters = mqc._getConnectionParameters()  # noqa: SLF001 pylint: disable=protected-access
                 self.assertIsNotNone(parameters)
                 connection = pika.BlockingConnection(parameters)
 
@@ -76,7 +74,6 @@ class MessageQueueConnectionTests(unittest.TestCase):
             result = channel.queue_declare(queue="test_queue", durable=True)
             channel.queue_bind(exchange="test_exchange", queue=result.method.queue, routing_key="text_message")
             message = "Test message"
-            #
             channel.basic_publish(
                 exchange="test_exchange",
                 routing_key="text_message",
@@ -85,7 +82,6 @@ class MessageQueueConnectionTests(unittest.TestCase):
                     delivery_mode=2,  # make message persistent
                 ),
             )
-            #
             connection.close()
         except Exception:
             logger.exception("Publish request failing")
@@ -104,7 +100,7 @@ class MessageQueueConnectionTests(unittest.TestCase):
                 connection = pika.BlockingConnection(pika.ConnectionParameters("localhost"))
             else:
                 mqc = MessageQueueConnection()
-                parameters = mqc._getSslConnectionParameters()  # pylint: disable=protected-access
+                parameters = mqc._getSslConnectionParameters()  # noqa: SLF001 pylint: disable=protected-access
                 self.assertIsNotNone(parameters)
                 connection = pika.BlockingConnection(parameters)
 
@@ -116,7 +112,6 @@ class MessageQueueConnectionTests(unittest.TestCase):
             channel.queue_bind(exchange="test_exchange", queue=result.method.queue, routing_key="text_message")
             message = "Test message"
 
-            #
             channel.basic_publish(
                 exchange="",
                 routing_key="test_queue",
@@ -125,7 +120,6 @@ class MessageQueueConnectionTests(unittest.TestCase):
                     delivery_mode=2,  # make message persistent
                 ),
             )
-            #
             connection.close()
         except Exception:
             logger.exception("Publish request failing")

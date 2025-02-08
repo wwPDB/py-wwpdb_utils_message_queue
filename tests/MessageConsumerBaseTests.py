@@ -16,7 +16,6 @@ This software is provided under a Creative Commons Attribution 3.0 Unported
 License described at http://creativecommons.org/licenses/by/3.0/.
 
 """
-from __future__ import division, absolute_import, print_function
 
 __docformat__ = "restructuredtext en"
 __author__ = "John Westbrook"
@@ -25,11 +24,11 @@ __license__ = "Creative Commons Attribution 3.0 Unported"
 __version__ = "V0.07"
 
 
-import unittest
-import time
-import logging
 import argparse
+import logging
 import sys
+import time
+import unittest
 
 if __package__ is None or __package__ == "":
     from os import path
@@ -42,8 +41,6 @@ else:
 from wwpdb.utils.message_queue.MessageConsumerBase import MessageConsumerBase
 from wwpdb.utils.message_queue.MessageQueueConnection import MessageQueueConnection
 from wwpdb.utils.testing.Features import Features
-
-#
 
 logging.basicConfig(level=logging.INFO, format="\n[%(levelname)s]-%(module)s.%(funcName)s: %(message)s")
 logger = logging.getLogger()
@@ -93,7 +90,6 @@ class MessageConsumerBaseTests(unittest.TestCase):
 def suiteMessageConsumer():
     suite = unittest.TestSuite()
     suite.addTest(MessageConsumerBaseTests("testMessageConsumer"))
-    #
     return suite
 
 

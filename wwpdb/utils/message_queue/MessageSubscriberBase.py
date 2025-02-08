@@ -11,7 +11,6 @@ This software was developed as part of the World Wide Protein Data Bank
 Common Deposition and Annotation System Project
 
 """
-from __future__ import division, absolute_import, print_function
 
 __docformat__ = "restructuredtext en"
 __author__ = "James Smith"
@@ -21,6 +20,7 @@ __version__ = "V0.07"
 
 import logging
 import threading
+
 import pika
 
 try:
@@ -42,7 +42,7 @@ the publishDirect method has been implemented in the MessagePublisher class for 
 """
 
 
-class MessageSubscriberBase(object):
+class MessageSubscriberBase:
     def __init__(self, amqpUrl, local=False):
         self._url = amqpUrl
         self._closing = False
@@ -75,7 +75,6 @@ class MessageSubscriberBase(object):
             return
 
         self._channel.basic_consume(queue=self.__queue_name, on_message_callback=self.onMessage)
-        #
         self._channel.start_consuming()
 
     def workerMethod(self, msgBody, deliveryTag=None):
@@ -102,17 +101,16 @@ class MessageSubscriberBase(object):
         self._channel.add_on_cancel_callback(self.onConsumerCancelled)
         self._consumerTag = self._channel.basic_consume(queue=self.__queue_name, on_message_callback=self.onMessage)
 
-    def onMessage(self, unused_channel, basic_deliver, properties, body):
+    def onMessage(self, unused_channel, basic_deliver, properties, body):  # noqa: ARG002
         logger.info("Received message # %s from %s: %s", basic_deliver.delivery_tag, properties.app_id, body)
         try:
             thread = threading.Thread(target=self.workerMethod, args=(body, basic_deliver.delivery_tag))
             thread.start()
             while thread.is_alive():
-                self._channel._connection.sleep(1.0)  # pylint: disable=protected-access
+                self._channel._connection.sleep(1.0)  # noqa: SLF001 pylint: disable=protected-access
         except Exception as e:
             logger.exception("Worker failing with exception")
             logger.exception(e)
-        #
         logging.info("Done task")
         self.acknowledgeMessage(basic_deliver.delivery_tag)
 
@@ -120,7 +118,8 @@ class MessageSubscriberBase(object):
         logger.info("Acknowledging message %s", deliveryTag)
         self._channel.basic_ack(deliveryTag)
 
-    def onConnectionOpenError(self, *args, **kw):  # pylint: disable=unused-argument
+    @staticmethod
+    def onConnectionOpenError(*args, **kw):    # noqa: ARG002,ARG004 pylint: disable=unused-argument
         logger.info("Catching connection error - ")
         raise pika.exceptions.AMQPConnectionError
 
@@ -134,7 +133,7 @@ class MessageSubscriberBase(object):
             logger.info("Sending a Basic.Cancel command to RabbitMQ")
             self._channel.basic_cancel(callback=self.onCancelOk, consumer_tag=self._consumerTag)
 
-    def onCancelOk(self, unused_frame):
+    def onCancelOk(self, unused_frame):  # noqa: ARG002
         logger.info("RabbitMQ acknowledged the cancellation of the consumer")
         self.closeChannel()
 
@@ -155,6 +154,3 @@ class MessageSubscriberBase(object):
     def closeConnection(self):
         logger.info("Closing connection")
         self._connection.close()
-
-
-#

@@ -18,7 +18,6 @@ This software is provided under a Creative Commons Attribution 3.0 Unported
 License described at http://creativecommons.org/licenses/by/3.0/.
 
 """
-from __future__ import division, absolute_import, print_function
 
 __docformat__ = "restructuredtext en"
 __author__ = "John Westbrook"
@@ -27,21 +26,21 @@ __license__ = "Creative Commons Attribution 3.0 Unported"
 __version__ = "V0.07"
 
 
-import pika
 import logging
 
-#
+import pika
+
 try:
     from urllib.parse import urlencode
 except ImportError:
-    from urllib import urlencode
+    from urllib import urlencode  # type: ignore[no-redef,attr-defined]
 
 from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
 
 logger = logging.getLogger()
 
 
-class MessageQueueConnection(object):
+class MessageQueueConnection:
     def __init__(self):
         self._siteId = getSiteId(defaultSiteId=None)
         self._cI = ConfigInfo(self._siteId)
@@ -51,16 +50,14 @@ class MessageQueueConnection(object):
         rbmqClientProtocol = self._cI.get("SITE_RBMQ_CLIENT_PROTOCOL", default="")
         if "SSL" in rbmqClientProtocol:
             return self._getSslConnectionUrl()
-        else:
-            return self._getConnectionUrl()
+        return self._getConnectionUrl()
 
     def _getDefaultConnectionParameters(self):
         """Provide the connection parameters appropriate for the configured protocol.."""
         rbmqClientProtocol = self._cI.get("SITE_RBMQ_CLIENT_PROTOCOL", default="")
         if "SSL" in rbmqClientProtocol:
             return self._getSslConnectionParameters()
-        else:
-            return self._getConnectionParameters()
+        return self._getConnectionParameters()
 
     def _getSslConnectionParameters(self):
         pObj, _url = self.__getSslConnectionParameters()
@@ -91,7 +88,6 @@ class MessageQueueConnection(object):
             logger.exception("Failing")
 
         return parameters, rbmqUrl
-        #
 
     def _getConnectionParameters(self):
         """Return connection parameters for the standard TCP client connection --"""
