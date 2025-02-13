@@ -37,7 +37,7 @@ if __package__ is None or __package__ == "":
     from os import path
 
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
-    from commonsetup import TESTOUTPUT  # pylint: disable=unused-import,import-error
+    from commonsetup import TESTOUTPUT  # type: ignore[import-not-found] # pylint: disable=unused-import,import-error
 else:
     from .commonsetup import TESTOUTPUT  # noqa: F401
 from wwpdb.utils.message_queue.MessageQueueConnection import MessageQueueConnection

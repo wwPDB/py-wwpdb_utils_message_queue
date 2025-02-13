@@ -115,13 +115,18 @@ format = [
 format-python = ["ruff format", "ruff check --fix-only"]
 
 # 'check' only checks but never fixes
-check = ["ruff check --no-fix .", "mypy --non-interactive --install-types wwpdb tests"]
+check = ["ruff check --no-fix .", "mypy --non-interactive --install-types -p wwpdb -p tests"]
 
 # only checks with ruff (mypy has a lot of false positives)
 check-ruff = "ruff check --no-fix . {args}"
 
 # to complement 'check-ruff'
-check-mypy = "mypy --non-interactive --install-types wwpdb tests {args}"
+check-mypy = "mypy --non-interactive --install-types -p wwpdb -p tests {args}"
 
 # only check security via Bandit; we require these rules to pass
 check-security = "ruff check --select S --no-fix ."
+
+# -------------------------  Mypy disable import error ---------
+[[tool.mypy.overrides]]
+module = ["wwpdb.utils.*"]
+ignore_missing_imports = true

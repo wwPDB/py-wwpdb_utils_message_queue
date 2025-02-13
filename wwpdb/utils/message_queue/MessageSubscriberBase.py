@@ -24,7 +24,7 @@ import threading
 import pika
 
 try:
-    import exceptions
+    import exceptions  # type: ignore[import-not-found]
 except ImportError:
     import builtins as exceptions
 
