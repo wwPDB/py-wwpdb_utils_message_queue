@@ -11,7 +11,6 @@ This software was developed as part of the World Wide Protein Data Bank
 Common Deposition and Annotation System Project
 
 """
-from __future__ import division, absolute_import, print_function
 
 __docformat__ = "restructuredtext en"
 __author__ = "John Westbrook"
@@ -21,12 +20,13 @@ __version__ = "V0.07"
 
 import logging
 import threading
+
 import pika
 
 # import time
 
 try:
-    import exceptions
+    import exceptions  # type: ignore[import-not-found]
 except ImportError:
     import builtins as exceptions
 
@@ -34,7 +34,7 @@ except ImportError:
 logger = logging.getLogger()
 
 
-class MessageConsumerBase(object):
+class MessageConsumerBase:
     """Message consumer base class -
 
     Unexpected connection issues with RabbitMQ such as channel and connection closures
@@ -53,7 +53,6 @@ class MessageConsumerBase(object):
         self._closing = False
         self._consumerTag = None
         self._url = amqpUrl
-        #
         self.__exchange = None
         self.__exchangeType = None
         self.__queueName = None
@@ -70,7 +69,6 @@ class MessageConsumerBase(object):
     def setQueue(self, queueName, routingKey):
         self.__queueName = queueName
         self.__routingKey = routingKey
-        #
 
     def setExchange(self, exchange, exchangeType="topic"):
         self.__exchange = exchange
@@ -111,13 +109,12 @@ class MessageConsumerBase(object):
         """
         self._connection = self.connect()
         self._channel = self._connection.channel()
-        #
         try:
             if self.__priority:
                 self._channel.queue_declare(queue=self.__queueName, durable=True, arguments={"x-max-priority": 10})
             else:
                 self._channel.queue_declare(queue=self.__queueName, durable=True)
-        except Exception:
+        except Exception:  # noqa: BLE001
             self._connection.close()
             logger.critical("error - mixing of priority queues and non-priority queues")
             return
@@ -131,7 +128,7 @@ class MessageConsumerBase(object):
         # self.onConnectionOpen()
         # self._connection.ioloop.start()
 
-    def onMessage(self, unused_channel, basic_deliver, properties, body):
+    def onMessage(self, unused_channel, basic_deliver, properties, body):  # noqa: ARG002
         """Invoked when a message is delivered from RabbitMQ.
 
         The channel is passed.  The basic_deliver object that
@@ -154,14 +151,13 @@ class MessageConsumerBase(object):
                 # Loop while the thread is processing
                 # time.sleep(1.0)
                 # self._channel.process_data_events()
-                self._channel._connection.sleep(1.0)  # pylint: disable=protected-access
+                self._channel._connection.sleep(1.0)  # noqa: SLF001 # pylint: disable=protected-access
             # print("Back from thread")
             # self.workerMethod(msgBody=body, deliveryTag=basic_deliver.delivery_tag)
             # time.sleep(10)
         except Exception as e:
             logger.exception("Worker failing with exception")
             logger.exception(e)
-        #
         logging.info("Done task")
         # unused_channel.basic_ack(delivery_tag = basic_deliver.delivery_tag)
         self.acknowledgeMessage(basic_deliver.delivery_tag)
@@ -186,9 +182,7 @@ class MessageConsumerBase(object):
         """
         logger.info("Channel opened")
         self._channel = channel
-        #
         self._channel.basic_qos(prefetch_count=1)
-        #
         self.addOnChannelCloseCallback()
         self.setupExchange(self.__exchange, self.__exchangeType)
 
@@ -203,7 +197,7 @@ class MessageConsumerBase(object):
         logger.info("Declaring exchange %s", exchangeName)
         self._channel.exchange_declare(callback=self.onExchangeDeclareOk, exchange=exchangeName, exchange_type=exchangeType, passive=False, durable=True)
 
-    def onExchangeDeclareOk(self, unused_frame):
+    def onExchangeDeclareOk(self, unused_frame):  # noqa: ARG002
         """Invoked on successful Exchange.Declare command.
 
         :param pika.Frame.Method unused_frame: Exchange.DeclareOk response frame
@@ -225,11 +219,11 @@ class MessageConsumerBase(object):
                 self._channel.queue_declare(callback=self.onQueueDeclareOk, queue=queueName, durable=True, arguments={"x-max-priority": 10})
             else:
                 self._channel.queue_declare(callback=self.onQueueDeclareOk, queue=queueName, durable=True)
-        except Exception as _exc:  # noqa: F841
+        except Exception as _exc:  # noqa: F841,BLE001
             self._connection.close()
             logger.critical("error - mixing of priority queues and non-priority queues")
 
-    def onQueueDeclareOk(self, method_frame):  # pylint: disable=unused-argument
+    def onQueueDeclareOk(self, method_frame):  # noqa: ARG002 pylint: disable=unused-argument
         """Method invoked on success of Queue.Declare call made when setupQueue has completed.
 
         This method binds the queue and exchange with the routing key.
@@ -241,7 +235,7 @@ class MessageConsumerBase(object):
         logger.info("Binding %s to %s with %s", self.__exchange, self.__queueName, self.__routingKey)
         self._channel.queue_bind(callback=self.onBindOk, queue=self.__queueName, exchange=self.__exchange, routing_key=self.__routingKey)
 
-    def onBindOk(self, unused_frame):
+    def onBindOk(self, unused_frame):  # noqa: ARG002
         """Invoked by pika when the Queue.Bind method has completed. At this
         point we will start consuming messages by calling start_consuming
         which will invoke the needed RPC commands to start the process.
@@ -278,7 +272,8 @@ class MessageConsumerBase(object):
         logger.info("Adding consumer cancellation callback")
         self._channel.add_on_cancel_callback(self.onConsumerCancelled)
 
-    def onConnectionOpenError(self, *args, **kw):  # pylint: disable=unused-argument
+    @staticmethod
+    def onConnectionOpenError(*args, **kw):  # noqa: ARG002,ARG004 pylint: disable=unused-argument
         """Callback on connection error  - not used  -"""
         logger.info("Catching connection error - ")
         raise pika.exceptions.AMQPConnectionError
@@ -321,7 +316,7 @@ class MessageConsumerBase(object):
             logger.info("Sending a Basic.Cancel command to RabbitMQ")
             self._channel.basic_cancel(callback=self.onCancelOk, consumer_tag=self._consumerTag)
 
-    def onCancelOk(self, unused_frame):
+    def onCancelOk(self, unused_frame):  # noqa: ARG002
         """This method is invoked by pika when RabbitMQ acknowledges the
         cancellation of a consumer. At this point we will close the channel.
         This will invoke the on_channel_closed method once the channel has been

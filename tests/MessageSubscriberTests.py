@@ -16,11 +16,11 @@ __email__ = "james.smith@rcsb.org"
 __license__ = "Creative Commons Attribution 3.0 Unported"
 __version__ = "V0.07"
 
-import unittest
-import time
-import logging
 import argparse
+import logging
 import sys
+import time
+import unittest
 
 if __package__ is None or __package__ == "":
     from os import path
@@ -33,7 +33,6 @@ from wwpdb.utils.message_queue.MessageSubscriberBase import MessageSubscriberBas
 
 # from wwpdb.utils.testing.Features import Features
 
-#
 logging.basicConfig(level=logging.INFO, format="\n[%(levelname)s]-%(module)s.%(funcName)s: %(message)s")
 logger = logging.getLogger()
 
@@ -42,7 +41,7 @@ class MessageSubscriber(MessageSubscriberBase):
     def __init__(self, url, local=False):
         super().__init__(url, local=local)
 
-    def workerMethod(self, msgBody, deliveryTag=None):
+    def workerMethod(self, msgBody, deliveryTag=None):  # noqa: ARG002
         logger.info("Message body %r", msgBody)
         return True
 
@@ -74,7 +73,7 @@ class MessageSubscriberTests(unittest.TestCase):
                 url = None
             else:
                 mqc = MessageQueueConnection()
-                url = mqc._getDefaultConnectionUrl()  # pylint: disable=protected-access
+                url = mqc._getDefaultConnectionUrl()  # noqa: SLF001 pylint: disable=protected-access
 
             self.__subscriber = MessageSubscriber(url, local=self.LOCAL)
             self.__subscriber.add_exchange(self.__exchange_name)
@@ -93,7 +92,6 @@ class MessageSubscriberTests(unittest.TestCase):
         logger.debug("Starting")
         try:
             mp = MessagePublisher(local=self.LOCAL)
-            #
             for ii in range(1, numMessages + 1):
                 message = "Test message %5d" % ii
                 mp.publishDirect(message, exchangeName=self.__exchange_name)
@@ -125,7 +123,6 @@ class MessageSubscriberTests(unittest.TestCase):
 def suitePublishSubscribeRequest():
     suite = unittest.TestSuite()
     suite.addTest(MessageSubscriberTests("testPublishSubscribe"))
-    #
     return suite
 
 

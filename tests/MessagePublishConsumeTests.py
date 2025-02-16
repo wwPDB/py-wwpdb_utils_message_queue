@@ -1,103 +1,66 @@
 #
-# File: MessagePublishSubscribeTests.py
-# Date:  Feb-2023  James Smith
+# File: MessagePublishConsumeTests.py
+# Date:  13-Aug-2019  E. PeisachJ. Westbrook
 #
 # Updates:
 #
 ##
 """
-Test of direct exchange without using MessageSubscriber class.
-Subscriber variation on previous publish consume tests.
+A series of tests for automatic integration testing in which a published and consumer are created and consume messages.
 """
 
 __docformat__ = "restructuredtext en"
-__author__ = "James Smith"
-__email__ = "james.smith@rcsb.org"
+__author__ = "Ezra Peisach"
+__email__ = "peisach@rcsb.rutgers.edu"
 __license__ = "Creative Commons Attribution 3.0 Unported"
 __version__ = "V0.07"
 
 
-import unittest
-import time
-import logging
-import pika
 import argparse
+import logging
 import sys
+import time
+import unittest
+
+import pika
 
 if __package__ is None or __package__ == "":
     from os import path
 
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
+    from commonsetup import TESTOUTPUT  # type: ignore[import-not-found]  # pylint: disable=import-error,unused-import
+else:
+    from .commonsetup import TESTOUTPUT  # noqa: F401
 
 from wwpdb.utils.message_queue.MessagePublisher import MessagePublisher
 from wwpdb.utils.message_queue.MessageQueueConnection import MessageQueueConnection
 from wwpdb.utils.testing.Features import Features
 
-#
 logging.basicConfig(level=logging.INFO, format="\n[%(levelname)s]-%(module)s.%(funcName)s: %(message)s")
 logger = logging.getLogger()
 
 
 @unittest.skipUnless((len(sys.argv) > 1 and sys.argv[1] == "--local") or Features().haveRbmqTestServer(), "require Rbmq Test Environment")
-class MessagePublishSubscribeBasicTests(unittest.TestCase):
+class MessagePublishConsumeBasicTests(unittest.TestCase):
     LOCAL = False
 
-    def setUp(self):
-        self.__exchange_name = "test_subscriber_exchange"
-        self.__exchange_type = "direct"
-        self.__routing_key = "subscriber_routing_key"
-        self.__channel = None
-        self.__queue_name = None
-
-    def testPublishSubscribe(self):
-        self.initialize()
+    def testPublishConsume(self):
         self.publishMessages()
         self.consumeMessages()
 
-    def initialize(self):
-        """Test case:  publish single text message basic authentication"""
-
-        startTime = time.time()
-        logger.debug("Starting")
-
-        try:
-            if self.LOCAL:
-                connection = pika.BlockingConnection(pika.ConnectionParameters("localhost"))
-            else:
-                mqc = MessageQueueConnection()
-                parameters = mqc._getConnectionParameters()  # pylint: disable=protected-access
-                connection = pika.BlockingConnection(parameters)
-
-            self.__channel = connection.channel()
-
-            self.__channel.exchange_declare(exchange=self.__exchange_name, exchange_type=self.__exchange_type, durable=True, auto_delete=False)
-
-            result = self.__channel.queue_declare(queue="", exclusive=True, durable=True)
-            self.__queue_name = result.method.queue
-
-            self.__channel.queue_bind(exchange=self.__exchange_name, queue=self.__queue_name, routing_key=self.__routing_key)
-
-        except Exception:
-            logger.exception("Basic consumer failing")
-            self.fail()
-
-        endTime = time.time()
-        logger.debug("Completed (%f seconds)", (endTime - startTime))
-
     def publishMessages(self):
         """Publish numMessages messages to the test queue -"""
-        numMessages = 10
+        numMessages = 50
         startTime = time.time()
         logger.debug("Starting")
         try:
             mp = MessagePublisher(local=self.LOCAL)
-            #
             for ii in range(1, numMessages + 1):
                 message = "Test message %5d" % ii
-                mp.publishDirect(message, exchangeName=self.__exchange_name)
+                mp.publish(message, exchangeName="test_exchange", queueName="test_queue", routingKey="text_message")
             #
             #  Send a quit message to shutdown an associated test consumer -
-            mp.publishDirect("quit", exchangeName=self.__exchange_name)
+            mp.publish("quit", exchangeName="test_exchange", queueName="test_queue", routingKey="text_message")
         except Exception:
             logger.exception("Publish request failing")
             self.fail()
@@ -110,9 +73,23 @@ class MessagePublishSubscribeBasicTests(unittest.TestCase):
         startTime = time.time()
         logger.debug("Starting")
         try:
-            self.__channel.basic_consume(on_message_callback=messageHandler, queue=self.__queue_name, consumer_tag="test_consumer_tag")
+            if self.LOCAL:
+                connection = pika.BlockingConnection(pika.ConnectionParameters("localhost"))
+            else:
+                mqc = MessageQueueConnection()
+                parameters = mqc._getConnectionParameters()  # pylint: disable=protected-access
+                connection = pika.BlockingConnection(parameters)
 
-            self.__channel.start_consuming()
+            channel = connection.channel()
+
+            channel.exchange_declare(exchange="test_exchange", exchange_type="topic", durable=True, auto_delete=False)
+
+            result = channel.queue_declare(queue="test_queue", durable=True)
+            channel.queue_bind(exchange="test_exchange", queue=result.method.queue, routing_key="text_message")
+
+            channel.basic_consume(on_message_callback=messageHandler, queue=result.method.queue, consumer_tag="test_consumer_tag")
+
+            channel.start_consuming()
 
         except Exception:
             logger.exception("Basic consumer failing")
@@ -132,14 +109,11 @@ def messageHandler(channel, method, header, body):  # pylint: disable=unused-arg
     else:
         logger.info("Message body %r", body)
         time.sleep(0.25)
-    #
-    return
 
 
-def suitePublishSubscribeRequest():
+def suitePublishConsumeRequest():
     suite = unittest.TestSuite()
-    suite.addTest(MessagePublishSubscribeBasicTests("testPublishSubscribe"))
-    #
+    suite.addTest(MessagePublishConsumeBasicTests("testPublishConsume"))
     return suite
 
 
@@ -150,6 +124,6 @@ if __name__ == "__main__":
     LOCAL = False
     if args.local:
         LOCAL = True
-    MessagePublishSubscribeBasicTests.LOCAL = LOCAL
+    MessagePublishConsumeBasicTests.LOCAL = LOCAL
     runner = unittest.TextTestRunner(failfast=True)
-    runner.run(suitePublishSubscribeRequest())
+    runner.run(suitePublishConsumeRequest())

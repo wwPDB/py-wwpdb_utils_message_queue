@@ -1,1 +1,2 @@
 wwpdb.utils.testing
+pika-stubs

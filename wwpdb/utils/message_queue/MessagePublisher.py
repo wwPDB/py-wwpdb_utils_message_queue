@@ -17,7 +17,6 @@ This software is provided under a Creative Commons Attribution 3.0 Unported
 License described at http://creativecommons.org/licenses/by/3.0/.
 
 """
-from __future__ import division, absolute_import, print_function
 
 __docformat__ = "restructuredtext en"
 __author__ = "John Westbrook"
@@ -26,19 +25,19 @@ __license__ = "Creative Commons Attribution 3.0 Unported"
 __version__ = "V0.07"
 
 
-import pika
-import time
 import logging
 import re
 import sys
+import time
 
-#
+import pika
+
 from wwpdb.utils.message_queue.MessageQueueConnection import MessageQueueConnection
 
 logger = logging.getLogger()
 
 
-class MessagePublisher(object):
+class MessagePublisher:
     def __init__(self, local=False):
         self.__local = local
         self.__subscriber_exchange_type = "direct"
@@ -60,7 +59,7 @@ class MessagePublisher(object):
                 connection = pika.BlockingConnection(pika.ConnectionParameters("localhost"))
             else:
                 mqc = MessageQueueConnection()
-                parameters = mqc._getDefaultConnectionParameters()  # pylint: disable=protected-access
+                parameters = mqc._getDefaultConnectionParameters()  # noqa: SLF001 pylint: disable=protected-access
                 connection = pika.BlockingConnection(parameters)
 
             channel = connection.channel()
@@ -74,18 +73,16 @@ class MessagePublisher(object):
             except pika.exceptions.ChannelClosedByBroker as exc:
                 connection.close()
                 logger.critical("error - priority type of pre-existing queue does not match new queue")
-                if sys.version_info[0] == 2:
-                    raise pika.exceptions.ChannelClosedByBroker(exc.reply_code, exc.reply_text)  # pylint: disable=raise-missing-from,broad-exception-raised
-                else:
-                    raise pika.exceptions.ChannelClosedByBroker(exc.reply_code, exc.reply_text) from exc
+                if sys.version_info[0] == 2:  # noqa: UP036
+                    raise pika.exceptions.ChannelClosedByBroker(exc.reply_code, exc.reply_text)  # noqa: B904 # pylint: disable=raise-missing-from,broad-exception-raised
+                raise pika.exceptions.ChannelClosedByBroker(exc.reply_code, exc.reply_text) from exc
             except Exception as _exc:  # noqa: F841
                 connection.close()
                 logger.critical("error - mixing of regular queues and priority queues")
-                raise Exception  # pylint: disable=raise-missing-from,broad-exception-raised
+                raise Exception from _exc  # noqa: TRY002 pylint: disable=raise-missing-from,broad-exception-raised
 
             channel.queue_bind(exchange=exchangeName, queue=result.method.queue, routing_key=routingKey)
 
-            #
             if priority:
                 channel.basic_publish(
                     exchange=exchangeName,
@@ -102,7 +99,6 @@ class MessagePublisher(object):
                         delivery_mode=deliveryMode,  # set message persistence
                     ),
                 )
-            #
             ok = True
             connection.close()
         except Exception:
@@ -117,7 +113,7 @@ class MessagePublisher(object):
     def publishDirect(self, message, exchangeName):
         return self.__publishDirect(message=message, exchangeName=exchangeName)
 
-    def __publishDirect(self, message, exchangeName, durableFlag=True, deliveryMode=2):  # pylint: disable=unused-argument
+    def __publishDirect(self, message, exchangeName, durableFlag=True, deliveryMode=2):  # noqa: ARG002 pylint: disable=unused-argument
         """publish the input message -"""
         startTime = time.time()
         logger.debug("Starting to publish message ")
@@ -127,7 +123,7 @@ class MessagePublisher(object):
                 connection = pika.BlockingConnection(pika.ConnectionParameters("localhost"))
             else:
                 mqc = MessageQueueConnection()
-                parameters = mqc._getDefaultConnectionParameters()  # pylint: disable=protected-access
+                parameters = mqc._getDefaultConnectionParameters()  # noqa: SLF001 pylint: disable=protected-access
                 connection = pika.BlockingConnection(parameters)
 
             channel = connection.channel()
@@ -141,7 +137,6 @@ class MessagePublisher(object):
                     delivery_mode=deliveryMode,  # set message persistence
                 ),
             )
-            #
             ok = True
             connection.close()
         except Exception:

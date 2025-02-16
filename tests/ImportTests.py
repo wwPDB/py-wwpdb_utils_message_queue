@@ -22,7 +22,7 @@ if __package__ is None or __package__ == "":
     from os import path
 
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
-    from commonsetup import TESTOUTPUT  # pylint: disable=import-error
+    from commonsetup import TESTOUTPUT  # type: ignore[import-not-found] # pylint: disable=import-error
 else:
     from .commonsetup import TESTOUTPUT  # noqa: F401
 
