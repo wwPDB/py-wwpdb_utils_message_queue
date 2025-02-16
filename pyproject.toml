@@ -100,7 +100,7 @@ ignore = [
 # -------------------- default environment scripts ------------------
 [tool.hatch.envs.default]
 skip-install = true
-dependencies = ["mypy", "ruff >=0.6.9", "pika-stubs"]
+dependencies = ["mypy", "ruff >=0.6.9", "pika-stubs", "wwpdb.utils.testing"]
 
 
 [tool.hatch.envs.default.scripts]

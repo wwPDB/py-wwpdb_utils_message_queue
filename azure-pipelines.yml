@@ -31,6 +31,8 @@ jobs:
     parameters: {tox: 'lint_pylint', python: '3.9', os: 'linux'}
   - template: azure-template-tox-job.yml
     parameters: {tox: 'test_coverage', python: '3.9', os: 'linux', fixtures: "rabbitmq"}
+  - template: azure-template-tox-job.yml
+    parameters: {tox: 'mypy', python: '3.9', os: 'linux'}
     #
   - template: azure-template-tox-job.yml
     parameters: {tox: 'py39', python: '3.9', os: 'linux', fixtures: "rabbitmq"}
