@@ -21,6 +21,7 @@ from optparse import OptionParser  # pylint: disable=deprecated-module
 
 from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
 from wwpdb.utils.detach.DetachedProcessBase import DetachedProcessBase
+
 from wwpdb.utils.message_queue.MessageConsumerBase import MessageConsumerBase
 from wwpdb.utils.message_queue.MessageQueueConnection import MessageQueueConnection
 
@@ -34,7 +35,7 @@ class MessageConsumer(MessageConsumerBase):
     # def __init__(self, amqpUrl):
     #     super(MessageConsumer, self).__init__(amqpUrl)
 
-    def workerMethod(self, msgBody, deliveryTag=None):  # noqa: ARG002,PLR6301
+    def workerMethod(self, msgBody, deliveryTag=None):  # noqa: ARG002
         logger.info("Message body %r", msgBody)
         return True
 
@@ -81,8 +82,20 @@ class MyDetachedProcess(DetachedProcessBase):
     Illustrates the use of python logging and various I/O channels in detached process.
     """
 
-    def __init__(self, pidFile="/tmp/DetachedProcessBase.pid", stdin=os.devnull, stdout=os.devnull, stderr=os.devnull, wrkDir="/", gid=None, uid=None, local=False):  # noqa: S107,S108
-        super(MyDetachedProcess, self).__init__(pidFile=pidFile, stdin=stdin, stdout=stdout, stderr=stderr, wrkDir=wrkDir, gid=gid, uid=uid)
+    def __init__(
+        self,
+        pidFile="/tmp/DetachedProcessBase.pid",  # noqa: S108
+        stdin=os.devnull,
+        stdout=os.devnull,
+        stderr=os.devnull,
+        wrkDir="/",
+        gid=None,
+        uid=None,
+        local=False,
+    ):  # noqa: S108
+        super(MyDetachedProcess, self).__init__(
+            pidFile=pidFile, stdin=stdin, stdout=stdout, stderr=stderr, wrkDir=wrkDir, gid=gid, uid=uid
+        )
         self.__local = local
         self.__mcw = MessageConsumerWorker(local=self.__local)
 
@@ -94,7 +107,7 @@ class MyDetachedProcess(DetachedProcessBase):
         logger.info("SUSPENDING detached process")
         try:  # noqa: SIM105
             self.__mcw.suspend()
-        except Exception as _e:  # noqa: F841,BLE001
+        except Exception as _e:  # noqa: BLE001
             pass
 
 
@@ -108,10 +121,16 @@ if __name__ == "__main__":
 
     usage = "usage: %prog [options]"
     parser = OptionParser(usage)
-    parser.add_option("--start", default=False, action="store_true", dest="startOp", help="Start consumer client process")
+    parser.add_option(
+        "--start", default=False, action="store_true", dest="startOp", help="Start consumer client process"
+    )
     parser.add_option("--stop", default=False, action="store_true", dest="stopOp", help="Stop consumer client process")
-    parser.add_option("--restart", default=False, action="store_true", dest="restartOp", help="Restart consumer client process")
-    parser.add_option("--status", default=False, action="store_true", dest="statusOp", help="Report consumer client process status")
+    parser.add_option(
+        "--restart", default=False, action="store_true", dest="restartOp", help="Restart consumer client process"
+    )
+    parser.add_option(
+        "--status", default=False, action="store_true", dest="statusOp", help="Report consumer client process status"
+    )
 
     parser.add_option("--local", action="store_true", help="run on local machine")
 
@@ -158,7 +177,9 @@ if __name__ == "__main__":
         logger.setLevel(logging.INFO)
     else:
         logger.setLevel(logging.ERROR)
-    myDP = MyDetachedProcess(pidFile=pidFilePath, stdout=stdoutFilePath, stderr=stderrFilePath, wrkDir=wsLogDirPath, local=options.local)
+    myDP = MyDetachedProcess(
+        pidFile=pidFilePath, stdout=stdoutFilePath, stderr=stderrFilePath, wrkDir=wsLogDirPath, local=options.local
+    )
 
     if options.startOp:
         sys.stdout.write("+DetachedMessageConsumer() starting consumer service at %s\n" % lt)
@@ -175,5 +196,3 @@ if __name__ == "__main__":
     elif options.statusOp:
         sys.stdout.write("+DetachedMessageConsumer() reporting status for consumer service at %s\n" % lt)
         sys.stdout.write(myDP.status())
-    else:
-        pass

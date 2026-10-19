@@ -38,17 +38,18 @@ if __package__ is None or __package__ == "":
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
     from commonsetup import TESTOUTPUT  # type: ignore[import-not-found]  # pylint: disable=import-error,unused-import
 else:
-    from .commonsetup import TESTOUTPUT  # noqa: F401
+    from .commonsetup import TESTOUTPUT  # noqa: F401,TID252
+
+from wwpdb.utils.testing.Features import Features
 
 from wwpdb.utils.message_queue.MessageQueueConnection import MessageQueueConnection
-from wwpdb.utils.testing.Features import Features
 
 logging.basicConfig(level=logging.INFO, format="\n[%(levelname)s]-%(module)s.%(funcName)s: %(message)s")
 logger = logging.getLogger()
 
 
 # This test needs to run from main - it blocks and must be tested by hand
-inmain = True if __name__ == "__main__" else False
+inmain = True if __name__ == "__main__" else False  # noqa: SIM210
 
 
 def messageHandler(channel, method, header, body):  # pylint: disable=unused-argument
@@ -63,7 +64,10 @@ def messageHandler(channel, method, header, body):  # pylint: disable=unused-arg
         time.sleep(1)
 
 
-@unittest.skipUnless((len(sys.argv) > 1 and sys.argv[1] == "--local") or (Features().haveRbmqTestServer() and inmain), "require Rbmq Test Environment and run from commandline")
+@unittest.skipUnless(
+    (len(sys.argv) > 1 and sys.argv[1] == "--local") or (Features().haveRbmqTestServer() and inmain),
+    "require Rbmq Test Environment and run from commandline",
+)
 class MessageConsumerBasicTests(unittest.TestCase):
     LOCAL = False
 
@@ -76,7 +80,7 @@ class MessageConsumerBasicTests(unittest.TestCase):
                 connection = pika.BlockingConnection(pika.ConnectionParameters("localhost"))
             else:
                 mqc = MessageQueueConnection()
-                parameters = mqc._getConnectionParameters()  # pylint: disable=protected-access
+                parameters = mqc._getConnectionParameters()  # noqa: SLF001 pylint: disable=protected-access
                 connection = pika.BlockingConnection(parameters)
 
             channel = connection.channel()
@@ -86,7 +90,9 @@ class MessageConsumerBasicTests(unittest.TestCase):
             result = channel.queue_declare(queue="test_queue", durable=True)
             channel.queue_bind(exchange="test_exchange", queue=result.method.queue, routing_key="text_message")
 
-            channel.basic_consume(on_message_callback=messageHandler, queue=result.method.queue, consumer_tag="test_consumer_tag")
+            channel.basic_consume(
+                on_message_callback=messageHandler, queue=result.method.queue, consumer_tag="test_consumer_tag"
+            )
 
             channel.start_consuming()
 
@@ -105,7 +111,7 @@ class MessageConsumerBasicTests(unittest.TestCase):
                 connection = pika.BlockingConnection(pika.ConnectionParameters("localhost"))
             else:
                 mqc = MessageQueueConnection()
-                url = mqc._getSslConnectionUrl()  # pylint: disable=protected-access
+                url = mqc._getSslConnectionUrl()  # noqa: SLF001 pylint: disable=protected-access
                 parameters = pika.URLParameters(url)
                 connection = pika.BlockingConnection(parameters)
 
@@ -116,7 +122,9 @@ class MessageConsumerBasicTests(unittest.TestCase):
             result = channel.queue_declare(queue="test_queue", durable=True)
             channel.queue_bind(exchange="test_exchange", queue=result.method.queue, routing_key="text_message")
 
-            channel.basic_consume(on_message_callback=messageHandler, queue=result.method.queue, consumer_tag="test_consumer_tag")
+            channel.basic_consume(
+                on_message_callback=messageHandler, queue=result.method.queue, consumer_tag="test_consumer_tag"
+            )
 
             channel.start_consuming()
 

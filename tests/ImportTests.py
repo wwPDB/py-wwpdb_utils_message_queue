@@ -4,8 +4,7 @@
 #
 # Updates:
 ##
-"""Test cases for message_queue - simply import everything to ensure imports work
-"""
+"""Test cases for message_queue - simply import everything to ensure imports work"""
 
 #  pylint: disable=unused-import
 
@@ -24,7 +23,7 @@ if __package__ is None or __package__ == "":
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
     from commonsetup import TESTOUTPUT  # type: ignore[import-not-found] # pylint: disable=import-error
 else:
-    from .commonsetup import TESTOUTPUT  # noqa: F401
+    from .commonsetup import TESTOUTPUT  # noqa: F401,TID252
 
 import wwpdb.utils.message_queue.DetachedMessageConsumerExample
 import wwpdb.utils.message_queue.MessageConsumerBase

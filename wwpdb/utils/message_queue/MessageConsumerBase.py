@@ -158,7 +158,7 @@ class MessageConsumerBase:
         except Exception as e:
             logger.exception("Worker failing with exception")
             logger.exception(e)
-        logging.info("Done task")
+        logger.info("Done task")
         # unused_channel.basic_ack(delivery_tag = basic_deliver.delivery_tag)
         self.acknowledgeMessage(basic_deliver.delivery_tag)
 
@@ -195,7 +195,13 @@ class MessageConsumerBase:
 
         """
         logger.info("Declaring exchange %s", exchangeName)
-        self._channel.exchange_declare(callback=self.onExchangeDeclareOk, exchange=exchangeName, exchange_type=exchangeType, passive=False, durable=True)
+        self._channel.exchange_declare(
+            callback=self.onExchangeDeclareOk,
+            exchange=exchangeName,
+            exchange_type=exchangeType,
+            passive=False,
+            durable=True,
+        )
 
     def onExchangeDeclareOk(self, unused_frame):  # noqa: ARG002
         """Invoked on successful Exchange.Declare command.
@@ -216,10 +222,12 @@ class MessageConsumerBase:
         logger.info("Declaring queue %s", queueName)
         try:
             if self.__priority:
-                self._channel.queue_declare(callback=self.onQueueDeclareOk, queue=queueName, durable=True, arguments={"x-max-priority": 10})
+                self._channel.queue_declare(
+                    callback=self.onQueueDeclareOk, queue=queueName, durable=True, arguments={"x-max-priority": 10}
+                )
             else:
                 self._channel.queue_declare(callback=self.onQueueDeclareOk, queue=queueName, durable=True)
-        except Exception as _exc:  # noqa: F841,BLE001
+        except Exception as _exc:  # noqa: BLE001
             self._connection.close()
             logger.critical("error - mixing of priority queues and non-priority queues")
 
@@ -233,7 +241,9 @@ class MessageConsumerBase:
 
         """
         logger.info("Binding %s to %s with %s", self.__exchange, self.__queueName, self.__routingKey)
-        self._channel.queue_bind(callback=self.onBindOk, queue=self.__queueName, exchange=self.__exchange, routing_key=self.__routingKey)
+        self._channel.queue_bind(
+            callback=self.onBindOk, queue=self.__queueName, exchange=self.__exchange, routing_key=self.__routingKey
+        )
 
     def onBindOk(self, unused_frame):  # noqa: ARG002
         """Invoked by pika when the Queue.Bind method has completed. At this
@@ -273,7 +283,7 @@ class MessageConsumerBase:
         self._channel.add_on_cancel_callback(self.onConsumerCancelled)
 
     @staticmethod
-    def onConnectionOpenError(*args, **kw):  # noqa: ARG002,ARG004 pylint: disable=unused-argument
+    def onConnectionOpenError(*args, **kw):  # noqa: ARG004 pylint: disable=unused-argument
         """Callback on connection error  - not used  -"""
         logger.info("Catching connection error - ")
         raise pika.exceptions.AMQPConnectionError

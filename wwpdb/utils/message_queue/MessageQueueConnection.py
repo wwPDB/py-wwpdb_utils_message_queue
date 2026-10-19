@@ -80,11 +80,26 @@ class MessageQueueConnection:
             clientSslCaCertFile = self._cI.get("SITE_RBMQ_SSL_CA_CERT_FILE")
             clientSslKeyFile = self._cI.get("SITE_RBMQ_SSL_KEY_FILE")
             clientSslCertFile = self._cI.get("SITE_RBMQ_SSL_CERT_FILE")
-            ssl_opts = urlencode({"ssl_options": {"ca_certs": clientSslCaCertFile, "keyfile": clientSslKeyFile, "certfile": clientSslCertFile}})
-            rbmqUrl = "amqps://%s:%s@%s:%d/%s?%s" % (rbmqUser, rbmqPassword, rbmqServerHost, int(rbmqServerPort), rbmqVirtualHost, ssl_opts)
+            ssl_opts = urlencode(
+                {
+                    "ssl_options": {
+                        "ca_certs": clientSslCaCertFile,
+                        "keyfile": clientSslKeyFile,
+                        "certfile": clientSslCertFile,
+                    }
+                }
+            )
+            rbmqUrl = "amqps://%s:%s@%s:%d/%s?%s" % (
+                rbmqUser,
+                rbmqPassword,
+                rbmqServerHost,
+                int(rbmqServerPort),
+                rbmqVirtualHost,
+                ssl_opts,
+            )
             logger.debug("rbmq URL: %s ", rbmqUrl)
             parameters = pika.URLParameters(rbmqUrl)
-        except Exception as _e:  # noqa: F841
+        except Exception as _e:
             logger.exception("Failing")
 
         return parameters, rbmqUrl
@@ -110,8 +125,16 @@ class MessageQueueConnection:
             rbmqVirtualHost = self._cI.get("SITE_RBMQ_VIRTUAL_HOST")
 
             credentials = pika.PlainCredentials(rbmqUser, rbmqPassword)
-            parameters = pika.ConnectionParameters(host=rbmqServerHost, port=int(rbmqServerPort), virtual_host=rbmqVirtualHost, credentials=credentials)
-            rbmqUrl = "amqp://%s:%s@%s:%d/%s" % (rbmqUser, rbmqPassword, rbmqServerHost, int(rbmqServerPort), rbmqVirtualHost)
+            parameters = pika.ConnectionParameters(
+                host=rbmqServerHost, port=int(rbmqServerPort), virtual_host=rbmqVirtualHost, credentials=credentials
+            )
+            rbmqUrl = "amqp://%s:%s@%s:%d/%s" % (
+                rbmqUser,
+                rbmqPassword,
+                rbmqServerHost,
+                int(rbmqServerPort),
+                rbmqVirtualHost,
+            )
             logger.debug("rbmq URL: %s ", rbmqUrl)
         except Exception:
             logger.exception("Failing")

@@ -27,7 +27,7 @@ dependencies = [
     "wwpdb.utils.detach",
 ]
 
-requires-python = ">=3.6"
+requires-python = ">=3.8"
 
 # [project.optional-dependencies]
 
@@ -52,6 +52,9 @@ packages = ["wwpdb"]
 exclude = ["/wwpdb/mock-data"]
 
 #=================================== Ruff basics =============================#
+[tool.ruff]
+target-version = "py38"
+output-format = "concise"
 
 line-length = 120 # 120 is hatch's default via 'hatch init'
 include = [
@@ -67,10 +70,11 @@ include = [
 
 #
 # ------------------------- Ruff misc. options ----------------------
-preview = true
+preview = false
 explicit-preview-rules = true
 
 ignore = [
+  "DOC201",   # `return` is not documented in docstring
   "FBT002",   # Boolean default positional argument in function definition
   "FURB113",  #  Use `stPL.extend(...)` instead of repeatedly calling `stPL.append()`
   "INP001",   # File `xx` is part of an implicit namespace package. Add an `__init__.py
@@ -78,6 +82,7 @@ ignore = [
   "N802",     # Function name should be lowercase
   "N803",     # Argument name should be lowercase
   "N806",     # in function should be lowercase
+  "N815",     # Variable `exchangeName` in class scope should not be mixedCase
   "N816",     # Variable in global scope should not be mixedCase
   "N999",     # Invalid module name,
   "PERF401",  # Use a list comprehension to create a transformed list
@@ -130,3 +135,7 @@ check-security = "ruff check --select S --no-fix ."
 [[tool.mypy.overrides]]
 module = ["wwpdb.utils.*"]
 ignore_missing_imports = true
+
+# ------------------------ ruff disable until typing added
+[tool.ruff.lint.per-file-ignores]
+"tests/*.py" = ["ARG001"]

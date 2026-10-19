@@ -30,17 +30,20 @@ if __package__ is None or __package__ == "":
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
     from commonsetup import TESTOUTPUT  # type: ignore[import-not-found] # pylint: disable=import-error,unused-import
 else:
-    from .commonsetup import TESTOUTPUT  # noqa: F401
+    from .commonsetup import TESTOUTPUT  # noqa: F401,TID252
+
+from wwpdb.utils.testing.Features import Features
 
 from wwpdb.utils.message_queue.MessagePublisher import MessagePublisher
 from wwpdb.utils.message_queue.MessageQueueConnection import MessageQueueConnection
-from wwpdb.utils.testing.Features import Features
 
 logging.basicConfig(level=logging.INFO, format="\n[%(levelname)s]-%(module)s.%(funcName)s: %(message)s")
 logger = logging.getLogger()
 
 
-@unittest.skipUnless((len(sys.argv) > 1 and sys.argv[1] == "--local") or Features().haveRbmqTestServer(), "require Rbmq Test Environment")
+@unittest.skipUnless(
+    (len(sys.argv) > 1 and sys.argv[1] == "--local") or Features().haveRbmqTestServer(), "require Rbmq Test Environment"
+)
 class MessagePriorityTests(unittest.TestCase):
     LOCAL = False
     exchangeName = "test_priority_exchange"
@@ -54,7 +57,7 @@ class MessagePriorityTests(unittest.TestCase):
             connection = pika.BlockingConnection(pika.ConnectionParameters("localhost"))
         else:
             mqc = MessageQueueConnection()
-            parameters = mqc._getDefaultConnectionParameters()  # pylint: disable=protected-access
+            parameters = mqc._getDefaultConnectionParameters()  # noqa: SLF001 pylint: disable=protected-access
             connection = pika.BlockingConnection(parameters)
         channel = connection.channel()
         channel.queue_delete(queue=self.queueName)
@@ -76,10 +79,18 @@ class MessagePriorityTests(unittest.TestCase):
             mp = MessagePublisher(local=self.LOCAL)
             for ii in range(1, numMessages + 1):
                 message = "Test message %5d" % ii
-                mp.publish(message, exchangeName=self.exchangeName, queueName=self.queueName, routingKey=self.routingKey, priority=ii)
+                mp.publish(
+                    message,
+                    exchangeName=self.exchangeName,
+                    queueName=self.queueName,
+                    routingKey=self.routingKey,
+                    priority=ii,
+                )
             #
             #  Send a quit message to shutdown an associated test consumer -
-            mp.publish("quit", exchangeName=self.exchangeName, queueName=self.queueName, routingKey=self.routingKey, priority=1)
+            mp.publish(
+                "quit", exchangeName=self.exchangeName, queueName=self.queueName, routingKey=self.routingKey, priority=1
+            )
 
         except Exception:
             logger.exception("Publish request failing")
@@ -98,17 +109,21 @@ class MessagePriorityTests(unittest.TestCase):
                 connection = pika.BlockingConnection(pika.ConnectionParameters("localhost"))
             else:
                 mqc = MessageQueueConnection()
-                parameters = mqc._getConnectionParameters()  # pylint: disable=protected-access
+                parameters = mqc._getConnectionParameters()  # noqa: SLF001 pylint: disable=protected-access
                 connection = pika.BlockingConnection(parameters)
 
             channel = connection.channel()
 
-            channel.exchange_declare(exchange=self.exchangeName, exchange_type=self.exchangeType, durable=True, auto_delete=False)
+            channel.exchange_declare(
+                exchange=self.exchangeName, exchange_type=self.exchangeType, durable=True, auto_delete=False
+            )
 
             result = channel.queue_declare(queue=self.queueName, durable=True, arguments={"x-max-priority": 10})
             channel.queue_bind(exchange=self.exchangeName, queue=result.method.queue, routing_key=self.routingKey)
 
-            channel.basic_consume(on_message_callback=messageHandler, queue=result.method.queue, consumer_tag=self.consumerTag)
+            channel.basic_consume(
+                on_message_callback=messageHandler, queue=result.method.queue, consumer_tag=self.consumerTag
+            )
 
             channel.start_consuming()
 

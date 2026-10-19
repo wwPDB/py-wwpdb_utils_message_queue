@@ -66,7 +66,9 @@ class MessageSubscriberBase:
 
     def add_exchange(self, exchange):
         self.__exchanges.append(exchange)
-        self._channel.exchange_declare(exchange=exchange, exchange_type=self.__exchange_type, passive=False, durable=True)
+        self._channel.exchange_declare(
+            exchange=exchange, exchange_type=self.__exchange_type, passive=False, durable=True
+        )
         self._channel.queue_bind(exchange=exchange, queue=self.__queue_name, routing_key=self.__routing_key)
 
     def run(self):
@@ -111,7 +113,7 @@ class MessageSubscriberBase:
         except Exception as e:
             logger.exception("Worker failing with exception")
             logger.exception(e)
-        logging.info("Done task")
+        logger.info("Done task")
         self.acknowledgeMessage(basic_deliver.delivery_tag)
 
     def acknowledgeMessage(self, deliveryTag):
@@ -119,7 +121,7 @@ class MessageSubscriberBase:
         self._channel.basic_ack(deliveryTag)
 
     @staticmethod
-    def onConnectionOpenError(*args, **kw):    # noqa: ARG002,ARG004 pylint: disable=unused-argument
+    def onConnectionOpenError(*args, **kw):  # noqa: ARG004 pylint: disable=unused-argument
         logger.info("Catching connection error - ")
         raise pika.exceptions.AMQPConnectionError
 

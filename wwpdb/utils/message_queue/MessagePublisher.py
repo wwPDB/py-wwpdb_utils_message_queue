@@ -47,9 +47,13 @@ class MessagePublisher:
         # priority is either None or an integer between 1 and 10
         if priority and not re.match(r"^\d+$", str(priority)):
             priority = 1
-        return self.__publishMessage(message=message, exchangeName=exchangeName, queueName=queueName, routingKey=routingKey, priority=priority)
+        return self.__publishMessage(
+            message=message, exchangeName=exchangeName, queueName=queueName, routingKey=routingKey, priority=priority
+        )
 
-    def __publishMessage(self, message, exchangeName, queueName, routingKey, durableFlag=True, deliveryMode=2, priority=None):
+    def __publishMessage(
+        self, message, exchangeName, queueName, routingKey, durableFlag=True, deliveryMode=2, priority=None
+    ):
         """publish the input message -"""
         startTime = time.time()
         logger.debug("Starting to publish message ")
@@ -67,7 +71,9 @@ class MessagePublisher:
 
             try:
                 if priority:
-                    result = channel.queue_declare(queue=queueName, durable=durableFlag, arguments={"x-max-priority": 10})
+                    result = channel.queue_declare(
+                        queue=queueName, durable=durableFlag, arguments={"x-max-priority": 10}
+                    )
                 else:
                     result = channel.queue_declare(queue=queueName, durable=durableFlag)
             except pika.exceptions.ChannelClosedByBroker as exc:
@@ -76,7 +82,7 @@ class MessagePublisher:
                 if sys.version_info[0] == 2:  # noqa: UP036
                     raise pika.exceptions.ChannelClosedByBroker(exc.reply_code, exc.reply_text)  # noqa: B904 # pylint: disable=raise-missing-from,broad-exception-raised
                 raise pika.exceptions.ChannelClosedByBroker(exc.reply_code, exc.reply_text) from exc
-            except Exception as _exc:  # noqa: F841
+            except Exception as _exc:
                 connection.close()
                 logger.critical("error - mixing of regular queues and priority queues")
                 raise Exception from _exc  # noqa: TRY002 pylint: disable=raise-missing-from,broad-exception-raised
@@ -88,7 +94,9 @@ class MessagePublisher:
                     exchange=exchangeName,
                     routing_key=routingKey,
                     body=message,
-                    properties=pika.BasicProperties(delivery_mode=deliveryMode, priority=priority),  # set message persistence
+                    properties=pika.BasicProperties(
+                        delivery_mode=deliveryMode, priority=priority
+                    ),  # set message persistence
                 )
             else:
                 channel.basic_publish(
@@ -127,7 +135,9 @@ class MessagePublisher:
                 connection = pika.BlockingConnection(parameters)
 
             channel = connection.channel()
-            channel.exchange_declare(exchange=exchangeName, exchange_type=self.__subscriber_exchange_type, durable=True, auto_delete=False)
+            channel.exchange_declare(
+                exchange=exchangeName, exchange_type=self.__subscriber_exchange_type, durable=True, auto_delete=False
+            )
 
             channel.basic_publish(
                 exchange=exchangeName,

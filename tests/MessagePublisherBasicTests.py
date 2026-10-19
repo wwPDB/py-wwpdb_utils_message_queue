@@ -37,10 +37,11 @@ if __package__ is None or __package__ == "":
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
     from commonsetup import TESTOUTPUT  # type: ignore[import-not-found] # pylint: disable=import-error,unused-import
 else:
-    from .commonsetup import TESTOUTPUT  # noqa: F401
+    from .commonsetup import TESTOUTPUT  # noqa: F401,TID252
+
+from wwpdb.utils.testing.Features import Features
 
 from wwpdb.utils.message_queue.MessagePublisher import MessagePublisher
-from wwpdb.utils.testing.Features import Features
 
 logging.basicConfig(level=logging.INFO, format="\n[%(levelname)s]-%(module)s.%(funcName)s: %(message)s")
 logger = logging.getLogger()
@@ -50,7 +51,10 @@ logger = logging.getLogger()
 inmain = True if __name__ == "__main__" else False  # noqa: SIM210
 
 
-@unittest.skipUnless((len(sys.argv) > 1 and sys.argv[1] == "--local") or (Features().haveRbmqTestServer() and inmain), "require Rbmq Test Environment and started from command line")
+@unittest.skipUnless(
+    (len(sys.argv) > 1 and sys.argv[1] == "--local") or (Features().haveRbmqTestServer() and inmain),
+    "require Rbmq Test Environment and started from command line",
+)
 class MessagePublisherBasicTests(unittest.TestCase):
     LOCAL = False
 

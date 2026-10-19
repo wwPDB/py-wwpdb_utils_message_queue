@@ -36,28 +36,33 @@ if __package__ is None or __package__ == "":
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
     from commonsetup import TESTOUTPUT  # type: ignore[import-not-found] # pylint: disable=import-error,unused-import
 else:
-    from .commonsetup import TESTOUTPUT  # type: ignore[import-not-found]  # noqa: F401
+    from .commonsetup import TESTOUTPUT  # type: ignore[import-not-found]  # noqa: F401,TID252
+
+from wwpdb.utils.testing.Features import Features
 
 from wwpdb.utils.message_queue.MessageConsumerBase import MessageConsumerBase
 from wwpdb.utils.message_queue.MessageQueueConnection import MessageQueueConnection
-from wwpdb.utils.testing.Features import Features
 
 logging.basicConfig(level=logging.INFO, format="\n[%(levelname)s]-%(module)s.%(funcName)s: %(message)s")
 logger = logging.getLogger()
 
 
 # This test needs to run from main - otherwise will block
-inmain = True if __name__ == "__main__" else False
+inmain = True if __name__ == "__main__" else False  # noqa: SIM210
 
 
-@unittest.skipUnless((len(sys.argv) > 1 and sys.argv[1] == "--local") or Features().haveRbmqTestServer(), "require Rbmq Test Environment")
+@unittest.skipUnless(
+    (len(sys.argv) > 1 and sys.argv[1] == "--local") or Features().haveRbmqTestServer(), "require Rbmq Test Environment"
+)
 class MessageConsumer(MessageConsumerBase):
-    def workerMethod(self, msgBody, deliveryTag=None):
+    def workerMethod(self, msgBody, deliveryTag=None):  # noqa: ARG002
         logger.info("Message body %r", msgBody)
         return True
 
 
-@unittest.skipUnless((len(sys.argv) > 1 and sys.argv[1] == "--local") or Features().haveRbmqTestServer(), "require Rbmq Test Environment")
+@unittest.skipUnless(
+    (len(sys.argv) > 1 and sys.argv[1] == "--local") or Features().haveRbmqTestServer(), "require Rbmq Test Environment"
+)
 @unittest.skipUnless(inmain, "require running from main()")
 class MessageConsumerBaseTests(unittest.TestCase):
     LOCAL = False
@@ -71,7 +76,7 @@ class MessageConsumerBaseTests(unittest.TestCase):
             if self.LOCAL:
                 url = "localhost"
             else:
-                url = mqc._getSslConnectionUrl()  # pylint: disable=protected-access
+                url = mqc._getSslConnectionUrl()  # noqa: SLF001 pylint: disable=protected-access
             mc = MessageConsumer(amqpUrl=url, local=self.LOCAL)
             mc.setQueue(queueName="test_queue", routingKey="text_message")
             mc.setExchange(exchange="test_exchange", exchangeType="topic")

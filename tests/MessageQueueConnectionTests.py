@@ -39,15 +39,18 @@ if __package__ is None or __package__ == "":
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
     from commonsetup import TESTOUTPUT  # type: ignore[import-not-found] # pylint: disable=unused-import,import-error
 else:
-    from .commonsetup import TESTOUTPUT  # noqa: F401
-from wwpdb.utils.message_queue.MessageQueueConnection import MessageQueueConnection
+    from .commonsetup import TESTOUTPUT  # noqa: F401,TID252
 from wwpdb.utils.testing.Features import Features
+
+from wwpdb.utils.message_queue.MessageQueueConnection import MessageQueueConnection
 
 logging.basicConfig(level=logging.WARNING, format="\n[%(levelname)s]-%(module)s.%(funcName)s: %(message)s")
 logger = logging.getLogger()
 
 
-@unittest.skipUnless((len(sys.argv) > 1 and sys.argv[1] == "--local") or Features().haveRbmqTestServer(), "require Rbmq Test Environment")
+@unittest.skipUnless(
+    (len(sys.argv) > 1 and sys.argv[1] == "--local") or Features().haveRbmqTestServer(), "require Rbmq Test Environment"
+)
 class MessageQueueConnectionTests(unittest.TestCase):
     LOCAL = False
 
@@ -69,7 +72,9 @@ class MessageQueueConnectionTests(unittest.TestCase):
 
             channel = connection.channel()
 
-            channel.exchange_declare(exchange="test_exchange", exchange_type="topic", passive=False, durable=True, auto_delete=False)
+            channel.exchange_declare(
+                exchange="test_exchange", exchange_type="topic", passive=False, durable=True, auto_delete=False
+            )
 
             result = channel.queue_declare(queue="test_queue", durable=True)
             channel.queue_bind(exchange="test_exchange", queue=result.method.queue, routing_key="text_message")
@@ -106,7 +111,9 @@ class MessageQueueConnectionTests(unittest.TestCase):
 
             self.assertIsNotNone(connection)
             channel = connection.channel()
-            channel.exchange_declare(exchange="test_exchange", exchange_type="topic", passive=False, durable=True, auto_delete=False)
+            channel.exchange_declare(
+                exchange="test_exchange", exchange_type="topic", passive=False, durable=True, auto_delete=False
+            )
 
             result = channel.queue_declare(queue="test_queue", durable=True)
             channel.queue_bind(exchange="test_exchange", queue=result.method.queue, routing_key="text_message")

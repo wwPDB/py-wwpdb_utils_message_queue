@@ -30,15 +30,18 @@ if __package__ is None or __package__ == "":
 
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 
+from wwpdb.utils.testing.Features import Features
+
 from wwpdb.utils.message_queue.MessagePublisher import MessagePublisher
 from wwpdb.utils.message_queue.MessageQueueConnection import MessageQueueConnection
-from wwpdb.utils.testing.Features import Features
 
 logging.basicConfig(level=logging.INFO, format="\n[%(levelname)s]-%(module)s.%(funcName)s: %(message)s")
 logger = logging.getLogger()
 
 
-@unittest.skipUnless((len(sys.argv) > 1 and sys.argv[1] == "--local") or Features().haveRbmqTestServer(), "require Rbmq Test Environment")
+@unittest.skipUnless(
+    (len(sys.argv) > 1 and sys.argv[1] == "--local") or Features().haveRbmqTestServer(), "require Rbmq Test Environment"
+)
 class MessagePublishSubscribeBasicTests(unittest.TestCase):
     LOCAL = False
 
@@ -65,17 +68,21 @@ class MessagePublishSubscribeBasicTests(unittest.TestCase):
                 connection = pika.BlockingConnection(pika.ConnectionParameters("localhost"))
             else:
                 mqc = MessageQueueConnection()
-                parameters = mqc._getConnectionParameters()  # pylint: disable=protected-access
+                parameters = mqc._getConnectionParameters()  # noqa: SLF001 pylint: disable=protected-access
                 connection = pika.BlockingConnection(parameters)
 
             self.__channel = connection.channel()
 
-            self.__channel.exchange_declare(exchange=self.__exchange_name, exchange_type=self.__exchange_type, durable=True, auto_delete=False)
+            self.__channel.exchange_declare(
+                exchange=self.__exchange_name, exchange_type=self.__exchange_type, durable=True, auto_delete=False
+            )
 
             result = self.__channel.queue_declare(queue="", exclusive=True, durable=True)
             self.__queue_name = result.method.queue
 
-            self.__channel.queue_bind(exchange=self.__exchange_name, queue=self.__queue_name, routing_key=self.__routing_key)
+            self.__channel.queue_bind(
+                exchange=self.__exchange_name, queue=self.__queue_name, routing_key=self.__routing_key
+            )
 
         except Exception:
             logger.exception("Basic consumer failing")
@@ -109,7 +116,9 @@ class MessagePublishSubscribeBasicTests(unittest.TestCase):
         startTime = time.time()
         logger.debug("Starting")
         try:
-            self.__channel.basic_consume(on_message_callback=messageHandler, queue=self.__queue_name, consumer_tag="test_consumer_tag")
+            self.__channel.basic_consume(
+                on_message_callback=messageHandler, queue=self.__queue_name, consumer_tag="test_consumer_tag"
+            )
 
             self.__channel.start_consuming()
 
