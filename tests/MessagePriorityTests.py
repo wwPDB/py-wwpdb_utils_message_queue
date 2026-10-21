@@ -23,6 +23,8 @@ import time
 import unittest
 
 import pika
+from pika import spec
+from pika.adapters.blocking_connection import BlockingChannel
 
 if __package__ is None or __package__ == "":
     from os import path
@@ -52,7 +54,7 @@ class MessagePriorityTests(unittest.TestCase):
     exchangeType = "topic"
     consumerTag = "test_consumer_tag"
 
-    def setup(self):
+    def setup(self) -> None:
         if self.LOCAL:
             connection = pika.BlockingConnection(pika.ConnectionParameters("localhost"))
         else:
@@ -63,14 +65,14 @@ class MessagePriorityTests(unittest.TestCase):
         channel.queue_delete(queue=self.queueName)
         channel.exchange_delete(exchange=self.exchangeName)
 
-    def teardown(self):
+    def teardown(self) -> None:
         pass
 
-    def testPublishConsume(self):
+    def testPublishConsume(self) -> None:
         self.publishMessages()
         self.consumeMessages()
 
-    def publishMessages(self):
+    def publishMessages(self) -> None:
         """Publish numMessages messages to the test queue -"""
         numMessages = 10
         startTime = time.time()
@@ -99,7 +101,7 @@ class MessagePriorityTests(unittest.TestCase):
         endTime = time.time()
         logger.debug("Completed (%f seconds)", (endTime - startTime))
 
-    def consumeMessages(self):
+    def consumeMessages(self) -> None:
         """Test case:  publish single text message basic authentication"""
         startTime = time.time()
         logger.debug("Starting")
@@ -118,8 +120,8 @@ class MessagePriorityTests(unittest.TestCase):
                 exchange=self.exchangeName, exchange_type=self.exchangeType, durable=True, auto_delete=False
             )
 
-            result = channel.queue_declare(queue=self.queueName, durable=True, arguments={"x-max-priority": 10})
-            channel.queue_bind(exchange=self.exchangeName, queue=result.method.queue, routing_key=self.routingKey)
+            result = channel.queue_declare(queue=self.queueName, durable=True, arguments={"x-max-priority": 10})  # type: ignore[arg-type]  # pika-stubs mistypes arguments
+            channel.queue_bind(exchange=self.exchangeName, queue=result.method.queue, routing_key=self.routingKey)  # type: ignore[arg-type]  # set by the broker
 
             channel.basic_consume(
                 on_message_callback=messageHandler, queue=result.method.queue, consumer_tag=self.consumerTag
@@ -135,8 +137,13 @@ class MessagePriorityTests(unittest.TestCase):
         logger.debug("Completed (%f seconds)", (endTime - startTime))
 
 
-def messageHandler(channel, method, header, body):  # pylint: disable=unused-argument
-    channel.basic_ack(delivery_tag=method.delivery_tag)
+def messageHandler(
+    channel: BlockingChannel,
+    method: spec.Basic.Deliver,
+    header: spec.BasicProperties,  # pylint: disable=unused-argument
+    body: bytes,
+) -> None:
+    channel.basic_ack(delivery_tag=method.delivery_tag)  # type: ignore[arg-type]  # always set on a delivered message
 
     if body == b"quit":
         channel.basic_cancel(consumer_tag=MessagePriorityTests.consumerTag)
@@ -147,7 +154,7 @@ def messageHandler(channel, method, header, body):  # pylint: disable=unused-arg
         time.sleep(0.25)
 
 
-def suitePublishConsumeRequest():
+def suitePublishConsumeRequest() -> unittest.TestSuite:
     suite = unittest.TestSuite()
     suite.addTest(MessagePriorityTests("testPublishConsume"))
     return suite

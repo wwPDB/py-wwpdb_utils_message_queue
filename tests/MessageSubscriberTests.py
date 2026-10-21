@@ -21,6 +21,7 @@ import logging
 import sys
 import time
 import unittest
+from typing import Optional
 
 if __package__ is None or __package__ == "":
     from os import path
@@ -38,10 +39,10 @@ logger = logging.getLogger()
 
 
 class MessageSubscriber(MessageSubscriberBase):
-    def __init__(self, url, local=False):
+    def __init__(self, url: str, local: bool = False) -> None:  # noqa: FBT001
         super().__init__(url, local=local)
 
-    def workerMethod(self, msgBody, deliveryTag=None):  # noqa: ARG002
+    def workerMethod(self, msgBody: bytes, deliveryTag: Optional[int] = None) -> bool:  # noqa: ARG002
         logger.info("Message body %r", msgBody)
         return True
 
@@ -52,16 +53,16 @@ class MessageSubscriber(MessageSubscriberBase):
 class MessageSubscriberTests(unittest.TestCase):
     LOCAL = False
 
-    def setUp(self):
-        self.__exchange_name = None
-        self.__subscriber = None
+    def setUp(self) -> None:
+        self.__exchange_name = "test_subscriber_exchange"
+        self.__subscriber: Optional[MessageSubscriber] = None
 
-    def testPublishSubscribe(self):
+    def testPublishSubscribe(self) -> None:
         self.initialize()
         self.publishMessages()
         self.consumeMessages()
 
-    def initialize(self):
+    def initialize(self) -> None:
         """Test case:  publish single text message basic authentication"""
         self.__exchange_name = "test_subscriber_exchange"
 
@@ -69,11 +70,14 @@ class MessageSubscriberTests(unittest.TestCase):
         logger.debug("Starting")
 
         try:
+            url: Optional[str]
             if self.LOCAL:
-                url = None
+                url = "localhost"
             else:
                 mqc = MessageQueueConnection()
                 url = mqc._getDefaultConnectionUrl()  # noqa: SLF001 pylint: disable=protected-access
+            if url is None:
+                self.fail("Unable to build connection URL")
 
             self.__subscriber = MessageSubscriber(url, local=self.LOCAL)
             self.__subscriber.add_exchange(self.__exchange_name)
@@ -85,7 +89,7 @@ class MessageSubscriberTests(unittest.TestCase):
         endTime = time.time()
         logger.debug("Completed (%f seconds)", (endTime - startTime))
 
-    def publishMessages(self):
+    def publishMessages(self) -> None:
         """Publish numMessages messages to the test queue -"""
         numMessages = 10
         startTime = time.time()
@@ -105,12 +109,14 @@ class MessageSubscriberTests(unittest.TestCase):
         endTime = time.time()
         logger.debug("Completed (%f seconds)", (endTime - startTime))
 
-    def consumeMessages(self):
+    def consumeMessages(self) -> None:
         """Test case:  publish single text message basic authentication"""
         startTime = time.time()
         logger.debug("Starting")
 
         try:
+            if self.__subscriber is None:
+                self.fail("Subscriber not initialized")
             self.__subscriber.run()
         except Exception:
             logger.exception("Basic Subscriber failing")
@@ -120,7 +126,7 @@ class MessageSubscriberTests(unittest.TestCase):
         logger.debug("Completed (%f seconds)", (endTime - startTime))
 
 
-def suitePublishSubscribeRequest():
+def suitePublishSubscribeRequest() -> unittest.TestSuite:
     suite = unittest.TestSuite()
     suite.addTest(MessageSubscriberTests("testPublishSubscribe"))
     return suite

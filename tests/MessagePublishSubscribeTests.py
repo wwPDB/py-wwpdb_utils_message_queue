@@ -22,8 +22,11 @@ import logging
 import sys
 import time
 import unittest
+from typing import Optional
 
 import pika
+from pika import spec
+from pika.adapters.blocking_connection import BlockingChannel
 
 if __package__ is None or __package__ == "":
     from os import path
@@ -45,19 +48,19 @@ logger = logging.getLogger()
 class MessagePublishSubscribeBasicTests(unittest.TestCase):
     LOCAL = False
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.__exchange_name = "test_subscriber_exchange"
         self.__exchange_type = "direct"
         self.__routing_key = "subscriber_routing_key"
-        self.__channel = None
-        self.__queue_name = None
+        self.__channel: Optional[BlockingChannel] = None
+        self.__queue_name: Optional[str] = None
 
-    def testPublishSubscribe(self):
+    def testPublishSubscribe(self) -> None:
         self.initialize()
         self.publishMessages()
         self.consumeMessages()
 
-    def initialize(self):
+    def initialize(self) -> None:
         """Test case:  publish single text message basic authentication"""
 
         startTime = time.time()
@@ -79,6 +82,8 @@ class MessagePublishSubscribeBasicTests(unittest.TestCase):
 
             result = self.__channel.queue_declare(queue="", exclusive=True, durable=True)
             self.__queue_name = result.method.queue
+            if self.__queue_name is None:
+                self.fail("Broker did not assign a queue name")
 
             self.__channel.queue_bind(
                 exchange=self.__exchange_name, queue=self.__queue_name, routing_key=self.__routing_key
@@ -91,7 +96,7 @@ class MessagePublishSubscribeBasicTests(unittest.TestCase):
         endTime = time.time()
         logger.debug("Completed (%f seconds)", (endTime - startTime))
 
-    def publishMessages(self):
+    def publishMessages(self) -> None:
         """Publish numMessages messages to the test queue -"""
         numMessages = 10
         startTime = time.time()
@@ -111,11 +116,13 @@ class MessagePublishSubscribeBasicTests(unittest.TestCase):
         endTime = time.time()
         logger.debug("Completed (%f seconds)", (endTime - startTime))
 
-    def consumeMessages(self):
+    def consumeMessages(self) -> None:
         """Test case:  publish single text message basic authentication"""
         startTime = time.time()
         logger.debug("Starting")
         try:
+            if self.__channel is None or self.__queue_name is None:
+                self.fail("Channel not initialized")
             self.__channel.basic_consume(
                 on_message_callback=messageHandler, queue=self.__queue_name, consumer_tag="test_consumer_tag"
             )
@@ -130,8 +137,13 @@ class MessagePublishSubscribeBasicTests(unittest.TestCase):
         logger.debug("Completed (%f seconds)", (endTime - startTime))
 
 
-def messageHandler(channel, method, header, body):  # pylint: disable=unused-argument
-    channel.basic_ack(delivery_tag=method.delivery_tag)
+def messageHandler(
+    channel: BlockingChannel,
+    method: spec.Basic.Deliver,
+    header: spec.BasicProperties,  # pylint: disable=unused-argument
+    body: bytes,
+) -> None:
+    channel.basic_ack(delivery_tag=method.delivery_tag)  # type: ignore[arg-type]  # always set on a delivered message
 
     if body == b"quit":
         channel.basic_cancel(consumer_tag="test_consumer_tag")
@@ -142,7 +154,7 @@ def messageHandler(channel, method, header, body):  # pylint: disable=unused-arg
         time.sleep(0.25)
 
 
-def suitePublishSubscribeRequest():
+def suitePublishSubscribeRequest() -> unittest.TestSuite:
     suite = unittest.TestSuite()
     suite.addTest(MessagePublishSubscribeBasicTests("testPublishSubscribe"))
     return suite

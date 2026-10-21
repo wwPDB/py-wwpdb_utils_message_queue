@@ -29,8 +29,10 @@ import logging
 import re
 import sys
 import time
+from typing import Optional, Union
 
 import pika
+import pika.exceptions
 
 from wwpdb.utils.message_queue.MessageQueueConnection import MessageQueueConnection
 
@@ -38,22 +40,40 @@ logger = logging.getLogger()
 
 
 class MessagePublisher:
-    def __init__(self, local=False):
+    def __init__(self, local: bool = False) -> None:  # noqa: FBT001
         self.__local = local
         self.__subscriber_exchange_type = "direct"
         self.__subscriber_routing_key = "subscriber_routing_key"
 
-    def publish(self, message, exchangeName, queueName, routingKey, priority=None):
+    def publish(
+        self,
+        message: Union[str, bytes],
+        exchangeName: str,
+        queueName: str,
+        routingKey: str,
+        priority: Optional[Union[int, str]] = None,
+    ) -> bool:
         # priority is either None or an integer between 1 and 10
         if priority and not re.match(r"^\d+$", str(priority)):
             priority = 1
         return self.__publishMessage(
-            message=message, exchangeName=exchangeName, queueName=queueName, routingKey=routingKey, priority=priority
+            message=message,
+            exchangeName=exchangeName,
+            queueName=queueName,
+            routingKey=routingKey,
+            priority=int(priority) if priority else None,
         )
 
     def __publishMessage(
-        self, message, exchangeName, queueName, routingKey, durableFlag=True, deliveryMode=2, priority=None
-    ):
+        self,
+        message: Union[str, bytes],
+        exchangeName: str,
+        queueName: str,
+        routingKey: str,
+        durableFlag: bool = True,  # noqa: FBT001
+        deliveryMode: int = 2,
+        priority: Optional[int] = None,
+    ) -> bool:
         """publish the input message -"""
         startTime = time.time()
         logger.debug("Starting to publish message ")
@@ -72,7 +92,9 @@ class MessagePublisher:
             try:
                 if priority:
                     result = channel.queue_declare(
-                        queue=queueName, durable=durableFlag, arguments={"x-max-priority": 10}
+                        queue=queueName,
+                        durable=durableFlag,
+                        arguments={"x-max-priority": 10},  # type: ignore[arg-type]  # pika-stubs mistypes arguments
                     )
                 else:
                     result = channel.queue_declare(queue=queueName, durable=durableFlag)
@@ -87,13 +109,17 @@ class MessagePublisher:
                 logger.critical("error - mixing of regular queues and priority queues")
                 raise Exception from _exc  # noqa: TRY002 pylint: disable=raise-missing-from,broad-exception-raised
 
-            channel.queue_bind(exchange=exchangeName, queue=result.method.queue, routing_key=routingKey)
+            channel.queue_bind(
+                exchange=exchangeName,
+                queue=result.method.queue,  # type: ignore[arg-type]  # set by the broker
+                routing_key=routingKey,
+            )
 
             if priority:
                 channel.basic_publish(
                     exchange=exchangeName,
                     routing_key=routingKey,
-                    body=message,
+                    body=message,  # type: ignore[arg-type]  # pika also accepts str
                     properties=pika.BasicProperties(
                         delivery_mode=deliveryMode, priority=priority
                     ),  # set message persistence
@@ -102,7 +128,7 @@ class MessagePublisher:
                 channel.basic_publish(
                     exchange=exchangeName,
                     routing_key=routingKey,
-                    body=message,
+                    body=message,  # type: ignore[arg-type]  # pika also accepts str
                     properties=pika.BasicProperties(
                         delivery_mode=deliveryMode,  # set message persistence
                     ),
@@ -118,10 +144,16 @@ class MessagePublisher:
 
     # direct exchange pattern having extensive reliance on exchanges, with no queue declare or queue bind from publisher
 
-    def publishDirect(self, message, exchangeName):
+    def publishDirect(self, message: Union[str, bytes], exchangeName: str) -> bool:
         return self.__publishDirect(message=message, exchangeName=exchangeName)
 
-    def __publishDirect(self, message, exchangeName, durableFlag=True, deliveryMode=2):  # noqa: ARG002 pylint: disable=unused-argument
+    def __publishDirect(
+        self,
+        message: Union[str, bytes],
+        exchangeName: str,
+        durableFlag: bool = True,  # noqa: ARG002,FBT001 pylint: disable=unused-argument
+        deliveryMode: int = 2,
+    ) -> bool:
         """publish the input message -"""
         startTime = time.time()
         logger.debug("Starting to publish message ")
@@ -142,7 +174,7 @@ class MessagePublisher:
             channel.basic_publish(
                 exchange=exchangeName,
                 routing_key=self.__subscriber_routing_key,
-                body=message,
+                body=message,  # type: ignore[arg-type]  # pika also accepts str
                 properties=pika.BasicProperties(
                     delivery_mode=deliveryMode,  # set message persistence
                 ),

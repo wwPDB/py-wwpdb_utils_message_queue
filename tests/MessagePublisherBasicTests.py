@@ -58,10 +58,10 @@ inmain = True if __name__ == "__main__" else False  # noqa: SIM210
 class MessagePublisherBasicTests(unittest.TestCase):
     LOCAL = False
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.__numMessages = 50
 
-    def testPublishMessages(self):
+    def testPublishMessages(self) -> None:
         """Publish numMessages messages to the test queue -"""
         startTime = time.time()
         logger.debug("Starting")
@@ -81,7 +81,7 @@ class MessagePublisherBasicTests(unittest.TestCase):
         logger.debug("Completed (%f seconds)", (endTime - startTime))
 
 
-def suitePublishRequest():
+def suitePublishRequest() -> unittest.TestSuite:
     suite = unittest.TestSuite()
     suite.addTest(MessagePublisherBasicTests("testPublishMessages"))
     return suite

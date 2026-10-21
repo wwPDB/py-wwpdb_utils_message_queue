@@ -21,5 +21,5 @@ SiteConfigSetup().setupEnvironment(TESTOUTPUT, mockTopPath)
 
 
 class commonsetup:
-    def __init__(self):
+    def __init__(self) -> None:
         pass

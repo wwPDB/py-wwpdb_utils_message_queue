@@ -32,8 +32,8 @@ import wwpdb.utils.message_queue.MessageQueueConnection  # noqa: F401
 
 
 class ImportTests(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         pass
 
-    def testPass(self):
+    def testPass(self) -> None:
         pass

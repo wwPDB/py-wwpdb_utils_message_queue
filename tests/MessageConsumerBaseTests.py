@@ -29,6 +29,7 @@ import logging
 import sys
 import time
 import unittest
+from typing import Optional
 
 if __package__ is None or __package__ == "":
     from os import path
@@ -36,7 +37,7 @@ if __package__ is None or __package__ == "":
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
     from commonsetup import TESTOUTPUT  # type: ignore[import-not-found] # pylint: disable=import-error,unused-import
 else:
-    from .commonsetup import TESTOUTPUT  # type: ignore[import-not-found]  # noqa: F401,TID252
+    from .commonsetup import TESTOUTPUT  # noqa: F401,TID252
 
 from wwpdb.utils.testing.Features import Features
 
@@ -55,7 +56,7 @@ inmain = True if __name__ == "__main__" else False  # noqa: SIM210
     (len(sys.argv) > 1 and sys.argv[1] == "--local") or Features().haveRbmqTestServer(), "require Rbmq Test Environment"
 )
 class MessageConsumer(MessageConsumerBase):
-    def workerMethod(self, msgBody, deliveryTag=None):  # noqa: ARG002
+    def workerMethod(self, msgBody: bytes, deliveryTag: Optional[int] = None) -> bool:  # noqa: ARG002
         logger.info("Message body %r", msgBody)
         return True
 
@@ -67,16 +68,19 @@ class MessageConsumer(MessageConsumerBase):
 class MessageConsumerBaseTests(unittest.TestCase):
     LOCAL = False
 
-    def testMessageConsumer(self):
+    def testMessageConsumer(self) -> None:
         """Test case:  run async consumer"""
         startTime = time.time()
         logger.info("Starting")
         try:
             mqc = MessageQueueConnection()
+            url: Optional[str]
             if self.LOCAL:
                 url = "localhost"
             else:
                 url = mqc._getSslConnectionUrl()  # noqa: SLF001 pylint: disable=protected-access
+            if url is None:
+                self.fail("Unable to build SSL connection URL")
             mc = MessageConsumer(amqpUrl=url, local=self.LOCAL)
             mc.setQueue(queueName="test_queue", routingKey="text_message")
             mc.setExchange(exchange="test_exchange", exchangeType="topic")
@@ -92,7 +96,7 @@ class MessageConsumerBaseTests(unittest.TestCase):
         logger.info("Completed (%f seconds)", (endTime - startTime))
 
 
-def suiteMessageConsumer():
+def suiteMessageConsumer() -> unittest.TestSuite:
     suite = unittest.TestSuite()
     suite.addTest(MessageConsumerBaseTests("testMessageConsumer"))
     return suite

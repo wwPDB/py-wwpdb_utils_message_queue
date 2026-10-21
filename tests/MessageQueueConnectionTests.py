@@ -54,7 +54,7 @@ logger = logging.getLogger()
 class MessageQueueConnectionTests(unittest.TestCase):
     LOCAL = False
 
-    def testPublishRequestAuthBasic(self):
+    def testPublishRequestAuthBasic(self) -> None:
         """Test case:  create connection with basic authenication and publish single text message."""
         startTime = time.time()
         logger.debug("Starting")
@@ -77,8 +77,8 @@ class MessageQueueConnectionTests(unittest.TestCase):
             )
 
             result = channel.queue_declare(queue="test_queue", durable=True)
-            channel.queue_bind(exchange="test_exchange", queue=result.method.queue, routing_key="text_message")
-            message = "Test message"
+            channel.queue_bind(exchange="test_exchange", queue=result.method.queue, routing_key="text_message")  # type: ignore[arg-type]  # set by the broker
+            message = b"Test message"
             channel.basic_publish(
                 exchange="test_exchange",
                 routing_key="text_message",
@@ -96,7 +96,7 @@ class MessageQueueConnectionTests(unittest.TestCase):
         logger.debug("Completed (%f seconds)", (endTime - startTime))
 
     @unittest.skip("Having issues with self signed SSL certificates on local host")
-    def testPublishRequestAuthSSL(self):
+    def testPublishRequestAuthSSL(self) -> None:
         """Test case:  create SSL connection and publish a test message"""
         startTime = time.time()
         logger.debug("Starting")
@@ -116,8 +116,8 @@ class MessageQueueConnectionTests(unittest.TestCase):
             )
 
             result = channel.queue_declare(queue="test_queue", durable=True)
-            channel.queue_bind(exchange="test_exchange", queue=result.method.queue, routing_key="text_message")
-            message = "Test message"
+            channel.queue_bind(exchange="test_exchange", queue=result.method.queue, routing_key="text_message")  # type: ignore[arg-type]  # set by the broker
+            message = b"Test message"
 
             channel.basic_publish(
                 exchange="",
@@ -136,7 +136,7 @@ class MessageQueueConnectionTests(unittest.TestCase):
         logger.debug("Completed (%f seconds)", (endTime - startTime))
 
 
-def suitePublishRequest():
+def suitePublishRequest() -> unittest.TestSuite:
     suite = unittest.TestSuite()
     suite.addTest(MessageQueueConnectionTests("testPublishRequestAuthBasic"))
     # suite.addTest(MessageQueueConnectionTests("testPublishRequestAuthSSL"))

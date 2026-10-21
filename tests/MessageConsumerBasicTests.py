@@ -31,6 +31,8 @@ import time
 import unittest
 
 import pika
+from pika import spec
+from pika.adapters.blocking_connection import BlockingChannel
 
 if __package__ is None or __package__ == "":
     from os import path
@@ -52,8 +54,13 @@ logger = logging.getLogger()
 inmain = True if __name__ == "__main__" else False  # noqa: SIM210
 
 
-def messageHandler(channel, method, header, body):  # pylint: disable=unused-argument
-    channel.basic_ack(delivery_tag=method.delivery_tag)
+def messageHandler(
+    channel: BlockingChannel,
+    method: spec.Basic.Deliver,
+    header: spec.BasicProperties,  # pylint: disable=unused-argument
+    body: bytes,
+) -> None:
+    channel.basic_ack(delivery_tag=method.delivery_tag)  # type: ignore[arg-type]  # always set on a delivered message
 
     if body == b"quit":
         channel.basic_cancel(consumer_tag="test_consumer_tag")
@@ -71,7 +78,7 @@ def messageHandler(channel, method, header, body):  # pylint: disable=unused-arg
 class MessageConsumerBasicTests(unittest.TestCase):
     LOCAL = False
 
-    def testConsumeBasic(self):
+    def testConsumeBasic(self) -> None:
         """Test case:  publish single text message basic authentication"""
         startTime = time.time()
         logger.debug("Starting")
@@ -88,7 +95,7 @@ class MessageConsumerBasicTests(unittest.TestCase):
             channel.exchange_declare(exchange="test_exchange", exchange_type="topic", durable=True, auto_delete=False)
 
             result = channel.queue_declare(queue="test_queue", durable=True)
-            channel.queue_bind(exchange="test_exchange", queue=result.method.queue, routing_key="text_message")
+            channel.queue_bind(exchange="test_exchange", queue=result.method.queue, routing_key="text_message")  # type: ignore[arg-type]  # set by the broker
 
             channel.basic_consume(
                 on_message_callback=messageHandler, queue=result.method.queue, consumer_tag="test_consumer_tag"
@@ -102,7 +109,7 @@ class MessageConsumerBasicTests(unittest.TestCase):
         endTime = time.time()
         logger.debug("Completed (%f seconds)", (endTime - startTime))
 
-    def testConsumeSSL(self):
+    def testConsumeSSL(self) -> None:
         """Test case:  publish single text message basic authentication"""
         startTime = time.time()
         logger.debug("Starting")
@@ -112,6 +119,8 @@ class MessageConsumerBasicTests(unittest.TestCase):
             else:
                 mqc = MessageQueueConnection()
                 url = mqc._getSslConnectionUrl()  # noqa: SLF001 pylint: disable=protected-access
+                if url is None:
+                    self.fail("Unable to build SSL connection URL")
                 parameters = pika.URLParameters(url)
                 connection = pika.BlockingConnection(parameters)
 
@@ -120,7 +129,7 @@ class MessageConsumerBasicTests(unittest.TestCase):
             channel.exchange_declare(exchange="test_exchange", exchange_type="topic", durable=True, auto_delete=False)
 
             result = channel.queue_declare(queue="test_queue", durable=True)
-            channel.queue_bind(exchange="test_exchange", queue=result.method.queue, routing_key="text_message")
+            channel.queue_bind(exchange="test_exchange", queue=result.method.queue, routing_key="text_message")  # type: ignore[arg-type]  # set by the broker
 
             channel.basic_consume(
                 on_message_callback=messageHandler, queue=result.method.queue, consumer_tag="test_consumer_tag"
@@ -135,7 +144,7 @@ class MessageConsumerBasicTests(unittest.TestCase):
         logger.debug("Completed (%f seconds)", (endTime - startTime))
 
 
-def suiteConsumeRequest():
+def suiteConsumeRequest() -> unittest.TestSuite:
     suite = unittest.TestSuite()
     suite.addTest(MessageConsumerBasicTests("testConsumeBasic"))
     # suite.addTest(MessageConsumerBasicTests("testConsumeSSL"))

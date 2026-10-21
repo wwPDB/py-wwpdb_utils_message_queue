@@ -27,8 +27,10 @@ __version__ = "V0.07"
 
 
 import logging
+from typing import Optional, Tuple
 
 import pika
+from pika.connection import Parameters
 
 try:
     from urllib.parse import urlencode
@@ -41,36 +43,36 @@ logger = logging.getLogger()
 
 
 class MessageQueueConnection:
-    def __init__(self):
+    def __init__(self) -> None:
         self._siteId = getSiteId(defaultSiteId=None)
         self._cI = ConfigInfo(self._siteId)
 
-    def _getDefaultConnectionUrl(self):
+    def _getDefaultConnectionUrl(self) -> Optional[str]:
         """Provide the connection URL appropriate for the configured protocol.."""
         rbmqClientProtocol = self._cI.get("SITE_RBMQ_CLIENT_PROTOCOL", default="")
         if "SSL" in rbmqClientProtocol:
             return self._getSslConnectionUrl()
         return self._getConnectionUrl()
 
-    def _getDefaultConnectionParameters(self):
+    def _getDefaultConnectionParameters(self) -> Optional[Parameters]:
         """Provide the connection parameters appropriate for the configured protocol.."""
         rbmqClientProtocol = self._cI.get("SITE_RBMQ_CLIENT_PROTOCOL", default="")
         if "SSL" in rbmqClientProtocol:
             return self._getSslConnectionParameters()
         return self._getConnectionParameters()
 
-    def _getSslConnectionParameters(self):
+    def _getSslConnectionParameters(self) -> Optional[pika.URLParameters]:
         pObj, _url = self.__getSslConnectionParameters()
         return pObj
 
-    def _getSslConnectionUrl(self):
+    def _getSslConnectionUrl(self) -> Optional[str]:
         _pObj, url = self.__getSslConnectionParameters()
         return url
 
-    def __getSslConnectionParameters(self):
+    def __getSslConnectionParameters(self) -> Tuple[Optional[pika.URLParameters], Optional[str]]:
         """Return connection parameter object for SSL client connection -"""
-        parameters = None
-        rbmqUrl = None
+        parameters: Optional[pika.URLParameters] = None
+        rbmqUrl: Optional[str] = None
         try:
             rbmqServerHost = self._cI.get("SITE_RBMQ_SERVER_HOST")
             rbmqServerPort = self._cI.get("SITE_RBMQ_SSL_SERVER_PORT")
@@ -99,24 +101,25 @@ class MessageQueueConnection:
             )
             logger.debug("rbmq URL: %s ", rbmqUrl)
             parameters = pika.URLParameters(rbmqUrl)
-        except Exception as _e:
+        except Exception as _e:  # noqa: F841
             logger.exception("Failing")
 
         return parameters, rbmqUrl
 
-    def _getConnectionParameters(self):
+    def _getConnectionParameters(self) -> Optional[pika.ConnectionParameters]:
         """Return connection parameters for the standard TCP client connection --"""
         pObj, _url = self.__getConnectionParameters()
         return pObj
 
-    def _getConnectionUrl(self):
+    def _getConnectionUrl(self) -> Optional[str]:
         """Return connection parameters as a URL for the standard TCP client connection"""
         _pObj, url = self.__getConnectionParameters()
         return url
 
-    def __getConnectionParameters(self):
+    def __getConnectionParameters(self) -> Tuple[Optional[pika.ConnectionParameters], Optional[str]]:
         """Return connection parameter object for client connection using basic authentication."""
-        parameters = None
+        parameters: Optional[pika.ConnectionParameters] = None
+        rbmqUrl: Optional[str] = None
         try:
             rbmqServerHost = self._cI.get("SITE_RBMQ_SERVER_HOST")
             rbmqServerPort = self._cI.get("SITE_RBMQ_SERVER_PORT")

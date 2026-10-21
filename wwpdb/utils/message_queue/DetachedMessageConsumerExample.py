@@ -18,6 +18,7 @@ import platform
 import sys
 import time
 from optparse import OptionParser  # pylint: disable=deprecated-module
+from typing import Optional
 
 from wwpdb.utils.config.ConfigInfo import ConfigInfo, getSiteId
 from wwpdb.utils.detach.DetachedProcessBase import DetachedProcessBase
@@ -35,27 +36,31 @@ class MessageConsumer(MessageConsumerBase):
     # def __init__(self, amqpUrl):
     #     super(MessageConsumer, self).__init__(amqpUrl)
 
-    def workerMethod(self, msgBody, deliveryTag=None):  # noqa: ARG002
+    def workerMethod(self, msgBody: bytes, deliveryTag: Optional[int] = None) -> bool:  # noqa: ARG002
         logger.info("Message body %r", msgBody)
         return True
 
 
 class MessageConsumerWorker:
-    def __init__(self, local=False):
+    def __init__(self, local: bool = False) -> None:  # noqa: FBT001
         self.__local = local
         self.__setup()
 
-    def __setup(self):
+    def __setup(self) -> None:
+        url: Optional[str]
         if self.__local:
             url = "localhost"
         else:
             mqc = MessageQueueConnection()
             url = mqc._getSslConnectionUrl()  # noqa: SLF001 pylint: disable=protected-access
+        if url is None:
+            emsg = "Unable to build the RabbitMQ connection URL from the site configuration"
+            raise ValueError(emsg)
         self.__mc = MessageConsumer(amqpUrl=url, local=self.__local)
         self.__mc.setQueue(queueName="test_queue", routingKey="text_message")
         self.__mc.setExchange(exchange="test_exchange", exchangeType="topic")
 
-    def run(self):
+    def run(self) -> None:
         """Run async consumer"""
         startTime = time.time()
         logger.info("Starting ")
@@ -71,7 +76,7 @@ class MessageConsumerWorker:
         endTime = time.time()
         logger.info("Completed (%f seconds)", (endTime - startTime))
 
-    def suspend(self):
+    def suspend(self) -> None:
         logger.info("Suspending consumer worker... ")
         self.__mc.stop()
 
@@ -84,31 +89,32 @@ class MyDetachedProcess(DetachedProcessBase):
 
     def __init__(
         self,
-        pidFile="/tmp/DetachedProcessBase.pid",  # noqa: S108
-        stdin=os.devnull,
-        stdout=os.devnull,
-        stderr=os.devnull,
-        wrkDir="/",
-        gid=None,
-        uid=None,
-        local=False,
-    ):  # noqa: S108
+        pidFile: str = "/tmp/DetachedProcessBase.pid",  # noqa: S108
+        stdin: str = os.devnull,
+        stdout: str = os.devnull,
+        stderr: str = os.devnull,
+        wrkDir: str = "/",
+        gid: Optional[int] = None,
+        uid: Optional[int] = None,
+        local: bool = False,  # noqa: FBT001
+    ) -> None:  # noqa: S108
         super(MyDetachedProcess, self).__init__(
             pidFile=pidFile, stdin=stdin, stdout=stdout, stderr=stderr, wrkDir=wrkDir, gid=gid, uid=uid
         )
         self.__local = local
         self.__mcw = MessageConsumerWorker(local=self.__local)
 
-    def run(self):
+    def run(self) -> None:
         logger.info("STARTING detached run method")
         self.__mcw.run()
 
-    def suspend(self):
+    def suspend(self) -> bool:
         logger.info("SUSPENDING detached process")
         try:  # noqa: SIM105
             self.__mcw.suspend()
-        except Exception as _e:  # noqa: BLE001
+        except Exception as _e:  # noqa: BLE001,F841
             pass
+        return True
 
 
 if __name__ == "__main__":
