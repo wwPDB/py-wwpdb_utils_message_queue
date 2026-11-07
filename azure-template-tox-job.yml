@@ -136,7 +136,7 @@ jobs:
       #
     - task: Cache@2
       inputs:
-        key: 'python | "$(Agent.OS)" | "${{ parameters.python }}" | equirements.txt | requirements-test.txt'
+        key: 'python | "$(Agent.OS)" | "${{ parameters.python }}" | requirements.txt | requirements-test.txt'
         restoreKeys: | 
           python | "$(Agent.OS)" | "${{ parameters.python }}" 
         path: $(PIP_CACHE_DIR)
